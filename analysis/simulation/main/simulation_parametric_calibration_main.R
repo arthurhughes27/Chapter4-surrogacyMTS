@@ -180,17 +180,18 @@ fmt_percent <- function(x) {
 p1_cols <- c("#9EC5E0", "#4D74B8", "#00158F")
 names(p1_cols) <- levels(results_plot$nm)
 
-# Plot
+# Upper plotting bound: just above 0.5, but not enough to change the label display
+y_upper <- max(0.5, max(results_plot$fpr, na.rm = TRUE))
+
 p1 <- ggplot(results_plot, aes(
   x = alpha,
   y = fpr,
   colour = nm,
   group = nm
 )) +
-  # Shaded grey region above y=x
   geom_ribbon(
-    data = tibble(x = c(min_val, max_val)),
-    aes(x = x, ymin = x, ymax = max_val),
+    data = tibble(x = c(min_val, 0.5)),
+    aes(x = x, ymin = x, ymax = 0.5),
     inherit.aes = FALSE,
     fill = "grey80",
     alpha = 0.5
@@ -198,14 +199,16 @@ p1 <- ggplot(results_plot, aes(
   geom_line(size = 3, alpha = 0.6) +
   geom_point(size = 6, alpha = 0.6) +
   scale_x_log10(
-    limits = c(min_val, max_val),
-    breaks = c(alpha_grid, max_val),
+    breaks = c(alpha_grid, 0.5),
     labels = fmt_percent
   ) +
   scale_y_log10(
-    limits = c(min_val, max_val),
-    breaks = c(alpha_grid, max_val),
+    breaks = c(alpha_grid, 0.5),
     labels = fmt_percent
+  ) +
+  coord_cartesian(
+    xlim = c(min_val, 0.5),
+    ylim = c(min_val, y_upper)
   ) +
   geom_abline(
     intercept = 0,
@@ -225,10 +228,7 @@ p1 <- ggplot(results_plot, aes(
     y = "Empirical FPR",
     colour = NULL
   ) +
-  facet_grid(
-    . ~ M,
-    labeller = label_parsed   # interpret labels as plotmath
-  ) +
+  facet_grid(. ~ M, labeller = label_parsed) +
   scale_colour_manual(values = p1_cols, labels = scales::parse_format()) +
   guides(colour = guide_legend(override.aes = list(
     linewidth = 3,
