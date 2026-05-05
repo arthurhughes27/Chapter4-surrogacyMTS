@@ -9,4 +9,3 @@ source(fs::path("analysis", "simulation", "supplementary", "simulation_parametri
 source(fs::path("analysis", "simulation", "supplementary", "simulation_parametric_calibration_metaAnalysisModel.R"))
 source(fs::path("analysis", "simulation", "supplementary", "simulation_nonparametric_nstudies.R"))
 source(fs::path("analysis", "simulation", "supplementary", "simulation_nonparametric_nsamples.R"))
-
