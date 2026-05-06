@@ -69,6 +69,7 @@ for (val in grid) {
     # return screening plot
     return.all.weights = FALSE,
     # return weights for all predictors
+    return.all.evaluate = FALSE, 
     
     # Predictor transformation parameters
     aggregation_function = mean,
@@ -262,7 +263,7 @@ for (val in grid) {
     evaluate.weights     = hyperparameter_list$evaluate.weights,
     paired.studies       = hyperparameter_list$paired.studies,
     n.cores              = hyperparameter_list$n.cores,
-    u.y.hyp              = hyperparameter_list$u.y.hyp,
+    u.y.hyp              = hyperparameter_list$u.y.hyp
   )
   
   evaluation_output = extract_rise_outputs(evaluation_result = rise_evaluation_result)
