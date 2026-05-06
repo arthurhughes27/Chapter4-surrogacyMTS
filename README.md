@@ -1,13 +1,13 @@
 # RISE-Meta
 Repository for the development and implementation of the **Rank-Based Identification of High-Dimensional Surrogate Markers Meta-Analysis (RISE-Meta)** method.
-The methodology is described in the paper *Meta-Analysis of High-Dimensional Surrogate Markers*, available soon on arXiv.
+The methodology is described in the paper *Meta-Analysis of High-Dimensional Surrogate Markers*, available as a preprint from [https://arxiv.org/abs/2605.03819](https://arxiv.org/abs/2605.03819).
 
 ---
 
 ## Quick start
 
-1. Clone this repository.
-2. Ensure the required project structure:
+1. Clone this repository and open the project `RISE-meta.Rproj`. Ensure your working directory is the project root. 
+2. Create the required project structure:
 ```r
 source("analysis/create_project_structure.R")
 ```
