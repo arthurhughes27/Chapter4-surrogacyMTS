@@ -39,7 +39,7 @@ summary_df <- bind_rows(
 prev_n <- counts1$individuals
 
 hipc_merged_all_noNorm <- hipc_merged_all_noNorm %>%
-  filter(vaccine_name == "Influenza (IN)")
+  filter(group_long == "Influenza (IN)")
 
 counts2 <- get_counts(hipc_merged_all_noNorm)
 summary_df <- bind_rows(
@@ -56,9 +56,9 @@ summary_df <- bind_rows(
 prev_n <- counts2$individuals
 
 hipc_merged_all_noNorm <- hipc_merged_all_noNorm %>%
-  filter(study_time_collected %in% c(0, 1)) %>%
+  filter(time %in% c("P+0D", "P+1D")) %>%
   group_by(participant_id) %>%
-  filter(n_distinct(study_time_collected) == 2) %>%
+  filter(n_distinct(time) == 2) %>%
   ungroup()
 
 counts3 <- get_counts(hipc_merged_all_noNorm)
@@ -76,14 +76,10 @@ summary_df <- bind_rows(
 prev_n <- counts3$individuals
 
 hipc_merged_all_noNorm <- hipc_merged_all_noNorm %>%
-  filter((
-    !is.na(immResp_mean_hai_pre_value) &
-      !is.na(immResp_mean_hai_post_value)
-  ) |
-    (
-      !is.na(immResp_mean_nAb_pre_value) &
-        !is.na(immResp_mean_nAb_post_value)
-    ))
+  filter(
+      !is.na(ab_p_0) &
+        !is.na(ab_p_28)
+    )
 
 counts4 <- get_counts(hipc_merged_all_noNorm)
 summary_df <- bind_rows(

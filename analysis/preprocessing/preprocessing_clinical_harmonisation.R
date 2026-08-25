@@ -145,8 +145,8 @@ df_clinical_is2_mutated = df_clinical_is2 %>%
   mutate(
     sex = gender,
     age = age_imputed,
-    group = vaccine_name,
-    group_long = vaccine_name,
+    group = group_long,
+    group_long = group_long,
     time = ifelse(
       study_time_collected %% 1 == 0,
       paste0("P+", as.integer(study_time_collected), "D"),

@@ -5,10 +5,10 @@ extract_rise_inputs <- function(df,
                                 genesets,
                                 geneset_names,
                                 aggregation_function) {
-  sone_raw  <- df %>% filter(study_time_collected > 0)  %>% select(any_of(predictor_names))
-  szero_raw <- df %>% filter(study_time_collected == 0) %>% select(any_of(predictor_names))
-  yone      = df %>% filter(study_time_collected > 0)  %>% pull(response_post)
-  yzero     = df %>% filter(study_time_collected == 0) %>% pull(response_pre)
+  sone_raw  <- df %>% filter(time != "P+0D")  %>% dplyr::select(any_of(predictor_names))
+  szero_raw <- df %>% filter(time == "P+0D") %>% dplyr::select(any_of(predictor_names))
+  yone      = df %>% filter(time != "P+0D")  %>% pull(response_post)
+  yzero     = df %>% filter(time == "P+0D") %>% pull(response_pre)
   
   if (!is.null(genesets)) {
     sone = aggregate_to_geneset(
@@ -27,8 +27,8 @@ extract_rise_inputs <- function(df,
     sone = sone_raw
     szero = szero_raw
   }
-  studyone  = df %>% filter(study_time_collected > 0)  %>% pull(study_accession)
-  studyzero = df %>% filter(study_time_collected == 0) %>% pull(study_accession)
+  studyone  = df %>% filter(time != "P+0D")  %>% pull(study_accession)
+  studyzero = df %>% filter(time == "P+0D") %>% pull(study_accession)
   
   res = list(
     "yone" = yone,

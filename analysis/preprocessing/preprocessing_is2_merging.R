@@ -10,7 +10,7 @@ path_is2_immResp = fs::path(processed_data_path, "is2_immResp.rds")
 path_is2_expr = fs::path(processed_data_path, "is2_expr.rds")
 
 is2_clinical = readRDS(path_is2_clinical) %>% 
-  dplyr::select(-vaccine_name) %>% 
+  dplyr::select(-group_long) %>% 
   distinct()
 is2_immResp = readRDS(path_is2_immResp)
 is2_expr = readRDS(path_is2_expr)

@@ -7,8 +7,8 @@
 #' The ordering of individuals (rows) is retained.
 #'
 #' @param df A preprocessed data frame with exactly one pre-timepoint
-#'   (study_time_collected == 0) and one post-timepoint (study_time_collected > 0)
-#'   row per participant. Must contain columns: participant_id, study_time_collected,
+#'   (time == "P+0D") and one post-timepoint (time != "P+0D")
+#'   row per participant. Must contain columns: participant_id, time,
 #'   study_accession, response_pre, response_post, and all columns in gene_names.
 #' @param gene_names Character vector of gene/biomarker column names.
 #' @param seed numeric seed for reproducibility.
@@ -48,8 +48,8 @@ generate_permuted_dataset <- function(df,
   }
   
   # arrange so pre/post rows align by study and participant
-  pre_rows  <- df %>% filter(study_time_collected == 0)  %>% arrange(study_accession, participant_id)
-  post_rows <- df %>% filter(study_time_collected != 0) %>% arrange(study_accession, participant_id)
+  pre_rows  <- df %>% filter(time == "P+0D")  %>% arrange(study_accession, participant_id)
+  post_rows <- df %>% filter(time != "P+0D") %>% arrange(study_accession, participant_id)
   
   pre_genes  <- as.matrix(pre_rows[, gene_names])
   post_genes <- as.matrix(post_rows[, gene_names])

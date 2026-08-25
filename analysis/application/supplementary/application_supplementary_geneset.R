@@ -11,7 +11,7 @@ for (val in grid) {
   # Define global hyperparameters for analysis
   hyperparameter_list = list(
     # Hyperparameters for data pre-processing
-    tp = 1,
+    tp = "P+1D",
     # Timepoint for gene expression
     screen.fraction = 0.66,
     # Fraction of data for screening
@@ -143,7 +143,7 @@ for (val in grid) {
   preprocessed_data_list[["df.full"]]$study_accession %>% unique() %>% length()
   
   preprocessed_data_list[["df.full"]] %>%
-    select(participant_id, study_accession) %>%
+    dplyr::select(participant_id, study_accession) %>%
     distinct() %>%
     group_by(study_accession) %>%
     summarize(n = n())

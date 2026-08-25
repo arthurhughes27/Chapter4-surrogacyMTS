@@ -52,11 +52,11 @@ is2_clinical$vaccine_type <- is2_clinical$vaccine_type %>%
 
 # Create vaccine name column by combining pathogen and vaccine type
 is2_clinical <- is2_clinical %>%
-  mutate(vaccine_name = str_c(pathogen, " (", vaccine_type, ")"))
+  mutate(group_long = str_c(pathogen, " (", vaccine_type, ")"))
 
 # Create a shortened vaccine name variable
-is2_clinical$vaccine_name_short <- recode(
-  is2_clinical$vaccine_name,
+is2_clinical$group_long_short <- recode(
+  is2_clinical$group_long,
   "Ebola (RVV)"           = "Ebola (RVV)",
   "Yellow Fever (LV)"     = "Y.F. (LV)",
   "Smallpox (LV)"         = "Smallpox (LV)",
@@ -73,7 +73,7 @@ is2_clinical$vaccine_name_short <- recode(
 )
 
 is2_clinical = is2_clinical %>% 
-  filter(vaccine_name == "Influenza (IN)")
+  filter(group_long == "Influenza (IN)")
 
 # Define an ordering for the vaccines (this is for later to make figures consistent)
 conditions_order <- c(
@@ -94,7 +94,7 @@ conditions_order <- c(
 
 # Assign this order to the vaccine names
 is2_clinical <- is2_clinical %>%
-  mutate(vaccine_name = factor(vaccine_name, levels = conditions_order))
+  mutate(group_long = factor(group_long, levels = conditions_order))
 
 # Same for the shortened names
 conditions_order_short <- c(
@@ -116,7 +116,7 @@ conditions_order_short <- c(
 
 # Assign this order to the shortened vaccine names
 is2_clinical <- is2_clinical %>%
-  mutate(vaccine_name_short = factor(vaccine_name_short, levels = conditions_order_short))
+  mutate(group_long_short = factor(group_long_short, levels = conditions_order_short))
 
 # Define a colour for each vaccine
 ## This colour palette was chosen to maximise visual distinctiveness for 13 vaccines
@@ -138,20 +138,20 @@ color_palette_vaccine = c(
 )
 
 # Write a helper function to assign the colours
-assign_color <- function(vaccine_name) {
-  return(color_palette_vaccine[match(is2_clinical$vaccine_name,
-                                     levels(is2_clinical$vaccine_name))])
+assign_color <- function(group_long) {
+  return(color_palette_vaccine[match(is2_clinical$group_long,
+                                     levels(is2_clinical$group_long))])
 }
 
 # Assign the colours to the vaccine names
 is2_clinical$vaccine_colour <-
-  assign_color(is2_clinical$vaccine_name)
+  assign_color(is2_clinical$group_long)
 
 # Define an ordering for the studies (this is for later to make figures consistent)
 study_descriptions = is2_clinical %>%
-  dplyr::select(vaccine_name, study_accession) %>%
+  dplyr::select(group_long, study_accession) %>%
   distinct() %>%
-  arrange(vaccine_name)
+  arrange(group_long)
 
 # There are three studies which include multiple vaccines
 # SDY1260 and SDY1325 for Meningococcus CJ and PS,
@@ -165,7 +165,7 @@ is2_clinical = is2_clinical %>%
   mutate(
     study_accession_unique = ifelse(
       study_accession_unique == "SDY1260" &
-        vaccine_name == "Meningococcus (CJ)",
+        group_long == "Meningococcus (CJ)",
       "SDY1260a",
       study_accession_unique
     )
@@ -173,7 +173,7 @@ is2_clinical = is2_clinical %>%
   mutate(
     study_accession_unique = ifelse(
       study_accession_unique == "SDY1260" &
-        vaccine_name == "Meningococcus (PS)",
+        group_long == "Meningococcus (PS)",
       "SDY1260b",
       study_accession_unique
     )
@@ -181,7 +181,7 @@ is2_clinical = is2_clinical %>%
   mutate(
     study_accession_unique = ifelse(
       study_accession_unique == "SDY1325" &
-        vaccine_name == "Meningococcus (CJ)",
+        group_long == "Meningococcus (CJ)",
       "SDY1325a",
       study_accession_unique
     )
@@ -189,7 +189,7 @@ is2_clinical = is2_clinical %>%
   mutate(
     study_accession_unique = ifelse(
       study_accession_unique == "SDY1325" &
-        vaccine_name == "Meningococcus (PS)",
+        group_long == "Meningococcus (PS)",
       "SDY1325b",
       study_accession_unique
     )
@@ -197,7 +197,7 @@ is2_clinical = is2_clinical %>%
   mutate(
     study_accession_unique = ifelse(
       study_accession_unique == "SDY269" &
-        vaccine_name == "Influenza (IN)",
+        group_long == "Influenza (IN)",
       "SDY269a",
       study_accession_unique
     )
@@ -205,7 +205,7 @@ is2_clinical = is2_clinical %>%
   mutate(
     study_accession_unique = ifelse(
       study_accession_unique == "SDY269" &
-        vaccine_name == "Influenza (LV)",
+        group_long == "Influenza (LV)",
       "SDY269b",
       study_accession_unique
     )
@@ -213,7 +213,7 @@ is2_clinical = is2_clinical %>%
   mutate(
     study_accession_unique = ifelse(
       study_accession_unique == "SDY180" &
-        vaccine_name == "Influenza (IN)",
+        group_long == "Influenza (IN)",
       "SDY180a",
       study_accession_unique
     )
@@ -221,7 +221,7 @@ is2_clinical = is2_clinical %>%
   mutate(
     study_accession_unique = ifelse(
       study_accession_unique == "SDY180" &
-        vaccine_name == "Pneumococcus (PS)",
+        group_long == "Pneumococcus (PS)",
       "SDY180b",
       study_accession_unique
     )
@@ -229,9 +229,9 @@ is2_clinical = is2_clinical %>%
 
 # Redefine the study order
 study_descriptions = is2_clinical %>%
-  dplyr::select(vaccine_name, study_accession_unique) %>%
+  dplyr::select(group_long, study_accession_unique) %>%
   distinct() %>%
-  arrange(vaccine_name)
+  arrange(group_long)
 
 study_order <- study_descriptions$study_accession_unique
 
@@ -296,7 +296,7 @@ is2_clinical$study_colour <-
 dim(is2_clinical)
 
 is2_clinical = is2_clinical %>%
-  dplyr::select(participant_id, study_time_collected, age_imputed, gender, race, ethnicity, study_accession, vaccine_name) %>%
+  dplyr::select(participant_id, study_time_collected, age_imputed, gender, race, ethnicity, study_accession, group_long) %>%
   distinct()
 
 # Save processed dataframe

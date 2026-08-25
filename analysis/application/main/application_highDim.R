@@ -8,7 +8,7 @@ library(parallel)
 # Define global hyperparameters for analysis
 hyperparameter_list = list(
   # Hyperparameters for data pre-processing
-  tp = 1,
+  tp = "P+1D",
   # Timepoint for gene expression
   screen.fraction = 0.66,
   # Fraction of data for screening
@@ -110,18 +110,22 @@ file_name_tag = paste0(
 sapply(list.files("R/", pattern = "\\.R$", full.names = TRUE), source)
 
 # Paths to processed data and output figures
-processed_data_folder <- "data"
+processed_data_folder <- fs::path("data")
 application_figures_folder <- fs::path("output", "figures", "application", "main")
 
 # Load merged gene expression and GS_list gene set objects
-df <- readRDS(fs::path(processed_data_folder, "hipc_merged_all_noNorm.rds"))
+df <- readRDS(fs::path(processed_data_folder, "df_merged_all.rds"))
+
 GS_list <- readRDS(fs::path(
   processed_data_folder,
   paste0(hyperparameter_list$geneset_definition, "_processed.rds")
 ))
 
+df_filtered = df %>% 
+  filter(group_long == "Influenza (IN)")
+
 preprocessed_data_list = preprocess_data(
-  df = df,
+  df = df_filtered,
   tp = hyperparameter_list$tp,
   screen.fraction = hyperparameter_list$screen.fraction,
   seed = hyperparameter_list$seed
@@ -131,7 +135,7 @@ preprocessed_data_list[["df.full"]]$participant_id %>% unique() %>% length()
 preprocessed_data_list[["df.full"]]$study_accession %>% unique() %>% length()
 
 preprocessed_data_list[["df.full"]] %>%
-  select(participant_id, study_accession) %>%
+  dplyr::select(participant_id, study_accession) %>%
   distinct() %>%
   group_by(study_accession) %>%
   summarize(n = n())

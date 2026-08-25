@@ -5,6 +5,16 @@ dir.create("output", recursive = TRUE, showWarnings = FALSE)
 dir.create("data-raw", recursive = TRUE, showWarnings = FALSE)
 dir.create("data", recursive = TRUE, showWarnings = FALSE)
 
+dir.create("data-raw/prevac", recursive = TRUE, showWarnings = FALSE)
+dir.create("data-raw/ebovac2", recursive = TRUE, showWarnings = FALSE)
+dir.create("data-raw/hamburg", recursive = TRUE, showWarnings = FALSE)
+dir.create("data-raw/is2", recursive = TRUE, showWarnings = FALSE)
+
+dir.create("data/prevac", recursive = TRUE, showWarnings = FALSE)
+dir.create("data/ebovac2", recursive = TRUE, showWarnings = FALSE)
+dir.create("data/hamburg", recursive = TRUE, showWarnings = FALSE)
+dir.create("data/is2", recursive = TRUE, showWarnings = FALSE)
+
 # Output substructure
 ## Figures
 dir.create("output/figures", recursive = TRUE, showWarnings = FALSE)

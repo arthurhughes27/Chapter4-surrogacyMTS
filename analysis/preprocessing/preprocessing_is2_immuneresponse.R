@@ -48,7 +48,7 @@ response_raw_merged <- bind_rows(response_nAb, response_hai) %>%
 
 # ---- Bring in study/vaccine info ----
 is2_studies <- is2_clinical %>%
-  dplyr::select(participant_id, study_accession, vaccine_name) %>%
+  dplyr::select(participant_id, study_accession, group_long) %>%
   distinct()
 
 response_raw_merged_studies <- response_raw_merged %>%
@@ -66,7 +66,7 @@ response_raw_merged_studies <- response_raw_merged_studies %>%
 
 # ---- Summarise across strains within participant/timepoint/assay ----
 response_summary <- response_raw_merged_studies %>%
-  group_by(participant_id, study_time_collected, assay, study_accession, vaccine_name) %>%
+  group_by(participant_id, study_time_collected, assay, study_accession, group_long) %>%
   summarise(
     response_mean = mean(value_preferred, na.rm = TRUE),
     n_analytes    = n_distinct(response_strain_analyte),
@@ -92,11 +92,11 @@ response_chosen_assay <- response_raw_merged_studies %>%
 
 # ---- Pivot 1: mean response per participant x timepoint ----
 response_wide <- response_chosen_assay %>%
-  distinct(participant_id, study_accession, vaccine_name, study_time_collected, assay) %>%
+  distinct(participant_id, study_accession, group_long, study_time_collected, assay) %>%
   left_join(response_summary,
-            by = c("participant_id", "study_accession", "vaccine_name",
+            by = c("participant_id", "study_accession", "group_long",
                    "study_time_collected", "assay")) %>%
-  dplyr::select(participant_id, study_accession, vaccine_name, study_time_collected, response_mean) %>%
+  dplyr::select(participant_id, study_accession, group_long, study_time_collected, response_mean) %>%
   mutate(study_time_collected = as.character(study_time_collected)) %>%
   pivot_wider(
     names_from  = study_time_collected,
@@ -106,11 +106,11 @@ response_wide <- response_chosen_assay %>%
 
 # ---- Pivot 2: individual strain-level response per participant x timepoint x strain ----
 response_strain_wide <- response_chosen_assay %>%
-  dplyr::select(participant_id, study_accession, vaccine_name,
+  dplyr::select(participant_id, study_accession, group_long,
                 study_time_collected, strain_clean, value_preferred) %>%
   mutate(study_time_collected = as.character(study_time_collected)) %>%
   pivot_wider(
-    id_cols     = c(participant_id, study_accession, vaccine_name),
+    id_cols     = c(participant_id, study_accession, group_long),
     names_from  = c(study_time_collected, strain_clean),
     values_from = value_preferred,
     names_glue  = "ab_p_{study_time_collected}_{strain_clean}"
@@ -128,14 +128,14 @@ ab_cols_sorted        <- order_ab_cols(grep("^ab_p_", names(response_wide), valu
 strain_cols_sorted    <- order_ab_cols(grep("^ab_p_", names(response_strain_wide), value = TRUE))
 
 response_wide        <- response_wide %>%
-  dplyr::select(participant_id, study_accession, vaccine_name, all_of(ab_cols_sorted))
+  dplyr::select(participant_id, study_accession, group_long, all_of(ab_cols_sorted))
 
 response_strain_wide <- response_strain_wide %>%
-  dplyr::select(participant_id, study_accession, vaccine_name, all_of(strain_cols_sorted))
+  dplyr::select(participant_id, study_accession, group_long, all_of(strain_cols_sorted))
 
 # ---- Combine summary means + strain-level columns into final dataframe ----
 is2_immResp <- response_wide %>%
-  left_join(response_strain_wide, by = c("participant_id", "study_accession", "vaccine_name"))
+  left_join(response_strain_wide, by = c("participant_id", "study_accession", "group_long"))
 
 # ---- Save ----
 p_save <- fs::path(processed_data_folder, "is2_immResp.rds")

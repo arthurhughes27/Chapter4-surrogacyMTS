@@ -23,7 +23,7 @@ extract_rise_outputs = function(screen_result = NULL,
         round(ci.delta.upper, 3),
         ")"
       )) %>%
-      select(marker, mu.delta.ci, p.unadjusted, p.adjusted) %>%
+      dplyr::select(marker, mu.delta.ci, p.unadjusted, p.adjusted) %>%
       filter(p.adjusted < 0.05)
     
     # Render LaTeX table of significant screening markers
@@ -68,7 +68,7 @@ extract_rise_outputs = function(screen_result = NULL,
         round(ci.delta.upper, 3),
         ")"
       )) %>%
-      select(marker, mu.delta.ci, p)  %>%
+      dplyr::select(marker, mu.delta.ci, p)  %>%
       distinct()
     
     # Render LaTeX table of significant screening markers

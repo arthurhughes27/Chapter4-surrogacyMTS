@@ -14,34 +14,31 @@ raw_response_influenzain = readRDS(fs::path(
 
 # Gene columns present in the data with no missing values
 gene_names <- hipc_merged_all_noNorm %>%
-  select(a1cf:zzz3) %>%
-  select(where( ~ !any(is.na(.)))) %>%
+  dplyr::select(a1cf:zzz3) %>%
+  dplyr::select(where( ~ !any(is.na(.)))) %>%
   colnames()
 
 # Inclusion criteria: inactivated influenza vaccine, MFC available, observations
 # at days 0-7 only, exactly one baseline row and at least one post-vaccination row
 hipc_merged_all_noNorm_filtered <- hipc_merged_all_noNorm %>%
   filter(
-    !is.na(immResp_MFC_anyAssay_log2_MFC),
-    vaccine_name == "Influenza (IN)",
-    study_time_collected %in% c(0, 1, 2, 3, 7)
+    !is.na(ab_p_0),
+    !is.na(ab_p_28),
+    group_long == "Influenza (IN)",
+    time %in% c("P+0D", "P+1D", "P+2D", "P+3D", "P+7D")
   ) %>%
   group_by(participant_id) %>%
-  filter(sum(study_time_collected == 0) == 1,
-         sum(study_time_collected > 0) > 0) %>%
+  filter(sum(time == "P+0D") == 1,
+         sum(time != "P+0D") > 0) %>%
   ungroup() %>%
-  select(
+  dplyr::select(
     participant_id,
     study_accession,
     arm_accession,
     age_imputed,
-    study_time_collected,
-    immResp_MFC_nAb_pre_value,
-    immResp_MFC_nAb_post_value,
-    immResp_MFC_hai_pre_value,
-    immResp_MFC_hai_post_value,
-    immResp_MFC_anyAssay_pre_value,
-    immResp_MFC_anyAssay_post_value,
+    time,
+    ab_p_0,
+    ab_p_28,
     gender,
     all_of(gene_names)
   ) %>%
@@ -75,21 +72,21 @@ hipc_merged_all_noNorm_filtered <- hipc_merged_all_noNorm_filtered %>%
 
 # Count observations per study and timepoint
 counts <- hipc_merged_all_noNorm_filtered %>%
-  filter(!is.na(study_time_collected)) %>%
-  group_by(study_accession, study_time_collected) %>%
+  filter(!is.na(time)) %>%
+  group_by(study_accession, time) %>%
   summarise(n = n(), .groups = "drop")
 
 # Convert timepoint to an ordered factor for correct x-axis ordering
 time_levels <- counts %>%
-  distinct(study_time_collected) %>%
-  arrange(as.numeric(study_time_collected)) %>%
-  pull(study_time_collected) %>%
+  distinct(time) %>%
+  arrange(as.numeric(time)) %>%
+  pull(time) %>%
   as.character()
 
 counts <- counts %>%
   mutate(
-    study_time_collected = factor(
-      as.character(study_time_collected),
+    time = factor(
+      as.character(time),
       levels = time_levels,
       ordered = TRUE
     ),
@@ -98,7 +95,7 @@ counts <- counts %>%
   )
 
 # Bubble size is proportional to raw count; labels show the count inside each bubble
-p1 <- ggplot(counts, aes(x = study_time_collected, y = study_accession)) +
+p1 <- ggplot(counts, aes(x = time, y = study_accession)) +
   geom_point(
     aes(size = n),
     fill = "#5062FF",

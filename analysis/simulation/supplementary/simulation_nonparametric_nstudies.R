@@ -30,8 +30,8 @@ hipc_merged_all_noNorm <- readRDS(p_load_expr_all_noNorm)
 
 # Extract the names of the markers
 gene_names <- hipc_merged_all_noNorm %>%
-  select(a1cf:zzz3) %>%
-  select(where(~ !any(is.na(.)))) %>%
+  dplyr::select(a1cf:zzz3) %>%
+  dplyr::select(where(~ !any(is.na(.)))) %>%
   colnames()
 
 # Set the nominal significance level
@@ -49,36 +49,31 @@ size_labels <- ifelse(is.na(sample_sizes), "Full", as.character(sample_sizes))
 # Filter the data to contain only relevant samples
 df <- hipc_merged_all_noNorm %>%
   mutate(
-    response_pre = ifelse(
-      study_accession %in% c("SDY80", "SDY180", "SDY1276", "SDY67"),
-      immResp_mean_nAb_pre_value,
-      immResp_mean_hai_pre_value
-    ),
-    response_post = ifelse(
-      study_accession %in% c("SDY80", "SDY180", "SDY1276", "SDY67"),
-      immResp_mean_nAb_post_value,
-      immResp_mean_hai_post_value
-    )
+    response_pre =
+      ab_p_0,
+    response_post =
+      ab_p_28,
   ) %>%
   filter(
-    !is.na(immResp_MFC_anyAssay_log2_MFC),
-    vaccine_name == "Influenza (IN)",
-    study_time_collected %in% timepoints_to_keep
+    !is.na(ab_p_0),
+    !is.na(ab_p_28),
+    group_long == "Influenza (IN)",
+    time %in% timepoints_to_keep
   ) %>%
   group_by(participant_id) %>%
-  filter(sum(study_time_collected == 0) == 1,
-         sum(study_time_collected == tp) == 1) %>%
+  filter(sum(time == "P+0D") == 1,
+         sum(time == tp) == 1) %>%
   ungroup() %>%
   group_by(study_accession) %>%
   filter(length(unique(participant_id)) >= sample_size_limit) %>%
   ungroup() %>%
-  select(
+  dplyr::select(
     participant_id,
     age_imputed,
     gender,
     race,
     study_accession,
-    study_time_collected,
+    time,
     response_pre,
     response_post,
     all_of(gene_names)

@@ -8,44 +8,34 @@ preprocess_data = function(df,
   
   # Gene columns present in the data with no missing values
   gene_names <- df %>%
-    select(a1cf:zzz3) %>%
-    select(where( ~ !any(is.na(.)))) %>%
+    dplyr::select(a1cf:zzz3) %>%
+    dplyr::select(where( ~ !any(is.na(.)))) %>%
     colnames()
   
   # Define the timepoints to keep
-  timepoints_to_keep <- c(0, tp)
+  timepoints_to_keep <- c("P+0D", tp)
   
   # Define the studies to use neutralising antibody response
   nab_studies = df %>%
     dplyr::select(study_accession,
-                  immResp_mean_nAb_pre_value,
-                  immResp_mean_hai_pre_value) %>%
-    # filter(is.na(immResp_mean_hai_pre_value)) %>% # uncomment to take HAI as priority
-    filter(!is.na(immResp_mean_nAb_pre_value)) %>%
+                  ab_p_0) %>%
+    filter(!is.na(ab_p_0)) %>%
     pull(study_accession) %>%
     unique()
   
   # Filter only inactivated influenza vaccine participants
   df_filtered <- df  %>%
-    filter(vaccine_name == "Influenza (IN)")
+    filter(group_long == "Influenza (IN)")
   
   # Filter for only the timepoints we care about
   df_filtered <- df_filtered %>%
-    filter(study_time_collected %in% timepoints_to_keep)
+    filter(time %in% timepoints_to_keep)
   
   # Define pre and post vaccination responses (nAb or HAI)
   df_filtered <- df_filtered %>%
     mutate(
-      response_pre = ifelse(
-        study_accession %in% nab_studies,
-        immResp_mean_nAb_pre_value,
-        immResp_mean_hai_pre_value
-      ),
-      response_post = ifelse(
-        study_accession %in% nab_studies,
-        immResp_mean_nAb_post_value,
-        immResp_mean_hai_post_value
-      )
+      response_pre = ab_p_0,
+      response_post = ab_p_28
     )
   
   # Filter any participants lacking immune responses
@@ -56,8 +46,8 @@ preprocess_data = function(df,
   # Remove participants lacking expression data at at least one timepoint
   df_filtered = df_filtered %>%
     group_by(participant_id) %>%
-    filter(sum(study_time_collected == 0) == 1,
-           sum(study_time_collected == tp) == 1)  %>%
+    filter(sum(time == "P+0D") == 1,
+           sum(time == tp) == 1)  %>%
     ungroup()
   
   # Remove studies without at least 5 participants
@@ -71,7 +61,7 @@ preprocess_data = function(df,
     dplyr::select(
       participant_id,
       study_accession,
-      study_time_collected,
+      time,
       response_pre,
       response_post,
       all_of(gene_names)
