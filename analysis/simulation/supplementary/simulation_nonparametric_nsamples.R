@@ -24,7 +24,7 @@ functions_folder <- fs::path("R")
 source(fs::path(functions_folder, "generate_permuted_dataset.R"))
 
 # Paths to real dataset
-p_load_expr_all_noNorm <- fs::path(processed_data_folder, "hipc_merged_all_noNorm.rds")
+p_load_expr_all_noNorm <- fs::path(processed_data_folder, "df_merged_all.rds")
 
 # Load data objects
 hipc_merged_all_noNorm <- readRDS(p_load_expr_all_noNorm)
