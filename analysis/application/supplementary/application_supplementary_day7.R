@@ -210,7 +210,7 @@ screen_fit_1
 
 # Save these graphics with an informative name
 ggsave(
-  filename = "WebFigure15.pdf",
+  filename = "risemeta-tiv-day7-screening.pdf",
   path     = application_figures_folder,
   plot     = screen_plot_1,
   width    = hyperparameter_list$screen.plot.width,
@@ -270,7 +270,7 @@ evaluation_forest_1
 evaluation_fit_1
 
 ggsave(
-  filename = "WebFigure16.pdf",
+  filename = "risemeta-tiv-day7-evaluation.pdf",
   path     = application_figures_folder,
   plot     = evaluation_forest_1,
   width    = hyperparameter_list$forest.plot.width,

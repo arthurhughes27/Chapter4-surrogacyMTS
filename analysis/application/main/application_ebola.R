@@ -28,7 +28,7 @@ hyperparameter_list = list(
   response_post_col = "ab_p_365",
   # Pre/post immune response columns (baseline vs. 1-year post-prime antibody level,
   # the only "far" post-vaccination readout with non-missing data in both studies)
-  screen.fraction = 0.66,
+  screen.fraction = 1,
   # Fraction of data for screening
   seed = 10012025,
   # seed for random data splitting
@@ -287,7 +287,7 @@ screen_forest_1
 screen_fit_1
 
 ggsave(
-  filename = "FigureEbola_screen.pdf",
+  filename = "risemeta_ebola_screening.pdf",
   path     = application_figures_folder,
   plot     = screen_plot_1,
   width    = hyperparameter_list$screen.plot.width,
@@ -344,7 +344,7 @@ evaluation_forest_1
 evaluation_fit_1
 
 ggsave(
-  filename = "FigureEbola_evaluate.pdf",
+  filename = "risemeta_ebola_evaluation.pdf",
   path     = application_figures_folder,
   plot     = evaluation_forest_1,
   width    = hyperparameter_list$forest.plot.width,
@@ -352,4 +352,4 @@ ggsave(
   units    = "cm"
 )
 
-rm(list = ls())
+# rm(list = ls())
