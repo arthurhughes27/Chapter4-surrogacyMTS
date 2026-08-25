@@ -54,6 +54,43 @@ is2_studies <- is2_clinical %>%
 response_raw_merged_studies <- response_raw_merged %>%
   inner_join(is2_studies, by = "participant_id")  # equivalent to merge(..., all = F), but keeps dplyr pipe + avoids row-order surprises
 
+# ---- Assign each raw collection day to a nominal immune response timepoint ----
+# Timepoints are defined to match the harmonised `ab_p_DAY` columns used
+# downstream (see preprocessing_clinical_harmonisation.R). A raw collection
+# day is assigned to the nearest nominal day if it falls within a +-7 day
+# (inclusive) window of it; otherwise it is dropped.
+nominal_days <- c(0, 7, 14, 28, 56, 63, 84, 180, 365)
+day_window   <- 7
+
+nearest_nominal_day <- function(day, targets, window) {
+  diffs <- abs(day - targets)
+  best  <- which.min(diffs)
+  if (diffs[best] <= window) targets[best] else NA_real_
+}
+
+response_raw_merged_studies <- response_raw_merged_studies %>%
+  mutate(
+    study_time_collected_raw = study_time_collected,
+    study_time_collected = vapply(
+      study_time_collected_raw,
+      nearest_nominal_day,
+      numeric(1),
+      targets = nominal_days,
+      window  = day_window
+    )
+  ) %>%
+  filter(!is.na(study_time_collected))
+
+# If more than one raw collection day falls within the window of the same
+# nominal day for a given participant/assay, keep only the raw day closest
+# to the nominal day (consistently across all strains for that participant).
+response_raw_merged_studies <- response_raw_merged_studies %>%
+  group_by(participant_id, assay, study_time_collected) %>%
+  mutate(day_dist = abs(study_time_collected_raw - study_time_collected)) %>%
+  filter(study_time_collected_raw == study_time_collected_raw[which.min(day_dist)]) %>%
+  ungroup() %>%
+  dplyr::select(-day_dist, -study_time_collected_raw)
+
 # ---- Clean strain names ONCE on distinct values, then join back ----
 # (janitor::make_clean_names() de-duplicates repeated inputs, which corrupts
 #  a data column with many repeated strain names if applied directly to it)
