@@ -6,7 +6,7 @@ processed_data_folder <- "data"
 descriptive_figures_folder <- fs::path("output", "figures", "descriptive")
 
 # Load merged gene expression dataset
-hipc_merged_all_noNorm <- readRDS(fs::path(processed_data_folder, "hipc_merged_all_noNorm.rds"))
+hipc_merged_all_noNorm <- readRDS(fs::path(processed_data_folder, "df_merged_all.rds"))
 raw_response_influenzain = readRDS(fs::path(
   processed_data_folder,
   "raw_response_influenzain_all_noNorm.rds"

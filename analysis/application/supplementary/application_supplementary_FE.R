@@ -115,7 +115,8 @@ processed_data_folder <- "data"
 application_figures_folder <- fs::path("output", "figures", "application", "supplementary")
 
 # Load merged gene expression and GS_list gene set objects
-df <- readRDS(fs::path(processed_data_folder, "hipc_merged_all_noNorm.rds"))
+df <- readRDS(fs::path(processed_data_folder, "df_merged_all.rds")) %>%
+  filter(group_long == "Influenza (IN)")
 GS_list <- readRDS(fs::path(
   processed_data_folder,
   paste0(hyperparameter_list$geneset_definition, "_processed.rds")
