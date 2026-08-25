@@ -213,7 +213,7 @@ Outputs:
 
 - Low-dimensional data application (Figure 3)
 - High-dimensional data application (Figures 3, 4)
-- Supplementary analyses (Supplementary Web Figures 9-13)
+- Supplementary analyses (Supplementary Web Figures 9-16)
 
 Saved in:
 
