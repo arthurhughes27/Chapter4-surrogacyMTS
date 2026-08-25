@@ -610,7 +610,7 @@ overall_combined_plot
 # ============================================================
 
 ggsave(
-  filename = "Figure3.pdf",
+  filename = "risemeta-lowdim.pdf",
   plot = overall_combined_plot,
   path  = application_figures_folder,
   width = 40,

@@ -216,10 +216,10 @@ for (val in grid) {
   screen_fit_1
   
   # Save these graphics with an informative name
-  tag = ifelse(val == "BG3M", 11, 13)
+  tag = ifelse(val == "BG3M", "BG3M", "none")
   
   ggsave(
-    filename = paste0("WebFigure", tag, ".pdf"),
+    filename = paste0("risemeta_screening_", tag, "_.pdf"),
     path     = application_figures_folder,
     plot     = screen_plot_1,
     width    = hyperparameter_list$screen.plot.width,
@@ -278,10 +278,10 @@ for (val in grid) {
   evaluation_forest_1
   evaluation_fit_1
   
-  tag = ifelse(val == "BG3M", 12, 14)
+  tag = ifelse(val == "BG3M", "BG3M", "none")
   
   ggsave(
-    filename = paste0("WebFigure", tag, ".pdf"),
+    filename = paste0("risemeta_evaluation_", tag, "_.pdf"),
     path     = application_figures_folder,
     plot     = evaluation_forest_1,
     width    = hyperparameter_list$forest.plot.width,
