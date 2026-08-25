@@ -3,7 +3,7 @@ library(fs)
 
 processed_data_folder <- "data"
 results_folder = fs::path("output", "results", "descriptive")
-p_load <- fs::path(processed_data_folder, "hipc_merged_all_noNorm.rds")
+p_load <- fs::path(processed_data_folder, "df_merged_all.rds")
 
 hipc_merged_all_noNorm <- readRDS(p_load)
 
