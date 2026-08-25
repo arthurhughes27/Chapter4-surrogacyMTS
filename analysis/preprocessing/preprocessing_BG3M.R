@@ -11,10 +11,11 @@ library(readxl)
 
 # Specify folder within folder root where the raw data lives
 raw_data_folder = "data-raw"
+processed_data_folder = "data"
 
 # Use fs::path() to specify the data paths robustly
 p_load_BG3M_raw <- fs::path(raw_data_folder, "Suppl_File_1_BIOINF.xls")
-p_load_expression <- fs::path(raw_data_folder, "all_noNorm_eset.rds")
+p_load_expression <- fs::path(processed_data_folder, "df_merged_all.rds")
 
 # Load data
 BG3M_raw = read_excel(p_load_BG3M_raw)
@@ -22,12 +23,11 @@ all_noNorm_eset <- readRDS(p_load_expression)
 
 # First we must preprocess the BG3M_raw raw data into a .gmt format
 
-# Member genes
+# Member genes 
 genesets <- strsplit(BG3M_raw$`Member genes`, ",\\s*")
 
 # Trim spaces and remove duplicates/empties
-genesets <- lapply(genesets, function(x)
-  unique(trimws(x[x != ""])))
+genesets <- lapply(genesets, function(x) unique(trimws(x[x != ""])))
 
 BG3M <- list(
   genesets = genesets,
@@ -36,10 +36,11 @@ BG3M <- list(
 )
 
 # First take the expression data
-expr_data = all_noNorm_eset@assayData[["exprs"]]
+expr_data = all_noNorm_eset %>% 
+  dplyr::select(a1cf:zzz3)
 
 # Now extract the gene names from the expression matrix - we are only interested in keeping these
-gene_names = rownames(expr_data) %>%
+gene_names = colnames(expr_data) %>%
   tolower()
 
 # Now in the geneset data - make the geneset names lowercase
@@ -99,3 +100,4 @@ p_save <- fs::path(processed_data_folder, "BG3M_processed.rds")
 saveRDS(BG3M, file = p_save)
 
 rm(list = ls())
+
