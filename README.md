@@ -167,7 +167,7 @@ See [Runtime information](#runtime-information) for details and suggestions.
 ### Preprocessing
 
 ```r
-source("analysis/preprocessing/preprocessing_master.R")
+source("analysis/preprocessing/master_preprocessing.R")
 ```
 
 Steps:
@@ -213,6 +213,7 @@ Outputs:
 
 - Low-dimensional data application (Figure 3)
 - High-dimensional data application (Figures 3, 4)
+- Ebola vaccine studies application (ebovac2 and prevac; hamburg excluded)
 - Supplementary analyses (Supplementary Web Figures 9-16)
 
 Saved in:
