@@ -256,7 +256,7 @@ p1 <- ggplot(plot_df,
 p1
 
 ggsave(
-  filename = "WebFigure4.pdf",
+  filename = "fpr_between_trial_variance.pdf",
   path = simulation_figures_folder,
   plot = p1,
   width = 50,

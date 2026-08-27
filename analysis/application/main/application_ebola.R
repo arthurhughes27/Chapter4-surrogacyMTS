@@ -352,4 +352,4 @@ ggsave(
   units    = "cm"
 )
 
-# rm(list = ls())
+rm(list = ls())

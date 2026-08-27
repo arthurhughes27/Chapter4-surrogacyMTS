@@ -132,7 +132,7 @@ p1 <- ggplot(counts, aes(x = time, y = study_accession)) +
 p1
 
 ggsave(
-  filename = "WebFigure1.pdf",
+  filename = "tiv_bubble_plot.pdf",
   path     = descriptive_figures_folder,
   plot     = p1,
   width    = 30,

@@ -296,7 +296,7 @@ p1 <- ggplot(plot_df,
 p1
 
 ggsave(
-  filename = "WebFigure5.pdf",
+  filename = "fpr_invalidMean.pdf",
   path = simulation_figures_folder,
   plot = p1,
   width = 45,

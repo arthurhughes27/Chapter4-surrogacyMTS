@@ -207,7 +207,7 @@ p1 <- ggplot(results,
 p1
 
 ggsave(
-  filename = "WebFigure6.pdf",
+  filename = "power_validMean.pdf",
   path = simulation_figures_folder,
   plot = p1,
   width = 30,
