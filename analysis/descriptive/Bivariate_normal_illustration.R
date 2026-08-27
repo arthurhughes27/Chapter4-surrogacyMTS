@@ -1,12 +1,15 @@
 library(tidyverse)
 library(MVN)
 library(furrr)
+library(knitr)
+library(kableExtra)
 
 set.seed(18042025)
 
 processed_data_path <- fs::path("data")
 figure_path <- fs::path("output", "figures", "application")
 results_path = fs::path("output", "results", "descriptive")
+tables_path = fs::path("output", "tables", "descriptive", "main")
 p_load_merged_all = fs::path(file = fs::path(processed_data_path, "df_merged_all.rds"))
 
 df_merged_all = readRDS(p_load_merged_all)
@@ -48,21 +51,56 @@ data <- df %>%
   filter(time == "P+0D") %>%
   dplyr::select(ab_p_0, all_of(gene_cols))
 
-# Function to run hz's test for one (response, gene) pair
-run_hz_bvn <- function(gene_name, data, response = "ab_p_0",
-                            B = 1000, bootstrap = F) {
+# Function to run a battery of MVN bivariate normality tests for one
+# (response, gene) pair. All tests are run for a given gene within the same
+# worker call, reusing the same parallel (one-task-per-gene) structure instead
+# of parallelizing separately per test.
+# The energy (E-statistic) test is deliberately excluded here: unlike the
+# others it has no closed-form/asymptotic p-value and always requires
+# bootstrap resampling, which would be far more expensive to run across
+# thousands of genes.
+run_bvn_tests <- function(gene_name, data, response = "ab_p_0") {
   pair_data <- data %>% dplyr::select(all_of(c(response, gene_name)))
 
-  res <- tryCatch(
-    hz(data = pair_data, B = B, cores = 1, bootstrap = F),
-    error = function(e) NULL
-  )
+  safe_test <- function(fn, ...) {
+    tryCatch(fn(data = pair_data, ...), error = function(e) NULL)
+  }
 
-  tibble(
-    gene      = gene_name,
-    statistic = if (is.null(res)) NA_real_ else res$Statistic,
-    p_value   = if (is.null(res)) NA_real_ else res$p.value,
-    error     = is.null(res)
+  single_row <- function(res, test_label) {
+    tibble(
+      gene      = gene_name,
+      test      = test_label,
+      statistic = if (is.null(res)) NA_real_ else res$Statistic,
+      p_value   = if (is.null(res)) NA_real_ else res$p.value,
+      error     = is.null(res)
+    )
+  }
+
+  res_hz  <- safe_test(hz,             bootstrap = FALSE)
+  res_hw  <- safe_test(hw,             bootstrap = FALSE)
+  res_roy <- safe_test(royston)
+  res_dh  <- safe_test(doornik_hansen)
+  res_mar <- safe_test(mardia,         bootstrap = FALSE)
+
+  bind_rows(
+    single_row(res_hz,  "Henze-Zirkler"),
+    single_row(res_hw,  "Henze-Wagner"),
+    single_row(res_roy, "Royston"),
+    single_row(res_dh,  "Doornik-Hansen"),
+    if (is.null(res_mar)) {
+      bind_rows(
+        single_row(NULL, "Mardia Skewness"),
+        single_row(NULL, "Mardia Kurtosis")
+      )
+    } else {
+      tibble(
+        gene      = gene_name,
+        test      = res_mar$Test,
+        statistic = res_mar$Statistic,
+        p_value   = res_mar$p.value,
+        error     = FALSE
+      )
+    }
   )
 }
 
@@ -70,21 +108,49 @@ run_hz_bvn <- function(gene_name, data, response = "ab_p_0",
 plan(multisession, workers = 8)
 
 set.seed(18042025)
-hz_results <- future_map_dfr(
+bvn_results <- future_map_dfr(
   gene_cols,
-  ~ run_hz_bvn(.x, data = data, B = 5000, bootstrap = F),
+  ~ run_bvn_tests(.x, data = data),
   .options = furrr_options(seed = TRUE),
   .progress = TRUE
 )
 
 plan(sequential)
 
-# Flag which pairs reject bivariate normality at alpha = 0.05
-hz_results <- hz_results %>%
+# Flag which pairs reject bivariate normality at alpha = 0.05, with BH
+# adjustment applied within each test (different tests are not pooled
+# together for multiplicity correction)
+bvn_results <- bvn_results %>%
+  group_by(test) %>%
+  mutate(p_adjusted = p.adjust(p_value, method = "BH")) %>%
+  ungroup() %>%
   mutate(bvn_rejected = p_value < 0.05,
-         p_adjusted = p.adjust(p_value, method = "BH")) %>%
-  mutate(bvn_adjusted_rejected = p_adjusted < 0.05)
+         bvn_adjusted_rejected = p_adjusted < 0.05)
 
-sum(hz_results$bvn_adjusted_rejected)/nrow(hz_results)
+# Proportion of gene pairs rejecting bivariate normality, per test
+bvn_results %>%
+  group_by(test) %>%
+  summarise(
+    prop_rejected_raw      = mean(bvn_rejected, na.rm = TRUE),
+    prop_rejected_adjusted = mean(bvn_adjusted_rejected, na.rm = TRUE),
+    .groups = "drop"
+  )
 
-saveRDS(hz_results, fs::path(results_path, "hz_bvn_results.rds"))
+saveRDS(bvn_results, fs::path(results_path, "bvn_results.rds"))
+
+# ---- LaTeX table: percentage of pairs rejecting BVN (BH-adjusted), per test ----
+bvn_summary_table <- bvn_results %>%
+  group_by(Test = test) %>%
+  summarise(`Percentage rejected` = round(100 * mean(bvn_adjusted_rejected, na.rm = TRUE), 1),
+            .groups = "drop")
+
+bvn_latex_table <- kable(
+  bvn_summary_table,
+  format = "latex",
+  booktabs = TRUE,
+  caption = "Percentage of gene pairs rejecting bivariate normality (BH-adjusted, alpha = 0.05) per MVN test."
+) %>%
+  kable_styling(latex_options = "hold_position") %>%
+  row_spec(0, bold = TRUE)
+
+writeLines(bvn_latex_table, fs::path(tables_path, "bvn_rejection_table.tex"))
