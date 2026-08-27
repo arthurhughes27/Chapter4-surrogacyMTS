@@ -1,12 +1,15 @@
 library(tidyverse)
 library(MVN)
 library(furrr)
+library(knitr)
+library(kableExtra)
 
 set.seed(18042025)
 
 processed_data_path <- fs::path("data")
 figure_path <- fs::path("output", "figures", "application")
 results_path = fs::path("output", "results", "descriptive")
+tables_path = fs::path("output", "tables", "descriptive", "main")
 p_load_merged_all = fs::path(file = fs::path(processed_data_path, "df_merged_all.rds"))
 
 df_merged_all = readRDS(p_load_merged_all)
@@ -134,3 +137,20 @@ bvn_results %>%
   )
 
 saveRDS(bvn_results, fs::path(results_path, "bvn_results.rds"))
+
+# ---- LaTeX table: percentage of pairs rejecting BVN (BH-adjusted), per test ----
+bvn_summary_table <- bvn_results %>%
+  group_by(Test = test) %>%
+  summarise(`Percentage rejected` = round(100 * mean(bvn_adjusted_rejected, na.rm = TRUE), 1),
+            .groups = "drop")
+
+bvn_latex_table <- kable(
+  bvn_summary_table,
+  format = "latex",
+  booktabs = TRUE,
+  caption = "Percentage of gene pairs rejecting bivariate normality (BH-adjusted, alpha = 0.05) per MVN test."
+) %>%
+  kable_styling(latex_options = "hold_position") %>%
+  row_spec(0, bold = TRUE)
+
+writeLines(bvn_latex_table, fs::path(tables_path, "bvn_rejection_table.tex"))

@@ -36,4 +36,9 @@ dir.create("output/results/simulation/main", recursive = TRUE, showWarnings = FA
 dir.create("output/results/simulation/supplementary", recursive = TRUE, showWarnings = FALSE)
 dir.create("output/results/descriptive", recursive = TRUE, showWarnings = FALSE)
 
+# Tables
+dir.create("output/tables", recursive = TRUE, showWarnings = FALSE)
+dir.create("output/tables/descriptive", recursive = TRUE, showWarnings = FALSE)
+dir.create("output/tables/descriptive/main", recursive = TRUE, showWarnings = FALSE)
+
 rm(list = ls())
