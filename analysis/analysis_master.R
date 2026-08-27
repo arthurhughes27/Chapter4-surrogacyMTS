@@ -13,7 +13,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE)) {
 renv::restore()
 
 # Master script for preprocessing files
-source(fs::path("analysis", "preprocessing", "preprocessing_master.R"))
+source(fs::path("analysis", "preprocessing", "master_preprocessing.R"))
 
 # Master script for data description files
 source(fs::path("analysis", "descriptive", "descriptive_master.R"))
