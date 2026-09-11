@@ -79,26 +79,32 @@ label_fun_day <- function(x) paste0("Day ", x)
 # Derived from the timepoints actually present for these studies (rather than
 # a fixed list), so an unused timepoint (e.g. "P+3H", relevant to other
 # vaccines' prime/boost designs but not sampled here) doesn't show up as an
-# empty column
+# empty column. Restricted to <= 7 days post-vaccination; negative (baseline)
+# timepoints are kept and correctly sorted before day 0.
+max_ge_hours <- 7 * 24
+
+# Extracts signed hours from a "P+XD"/"P+XH" label (X may be negative, e.g.
+# "P+-7D" for day -7), so timepoints sort chronologically and filter correctly
+time_to_hours <- function(x) {
+  if (str_detect(x, "H$")) as.numeric(str_extract(x, "-?\\d+(?=H$)"))
+  else as.numeric(str_extract(x, "-?\\d+(?=D$)")) * 24
+}
+
 ge_time_present <- df_clinical_all %>%
   filter(study_accession %in% study_order, !is.na(time)) %>%
   distinct(time) %>%
   pull(time) %>%
   as.character()
 
-time_to_hours <- function(x) {
-  if (str_detect(x, "H$")) as.numeric(str_extract(x, "\\d+(?=H$)"))
-  else as.numeric(str_extract(x, "\\d+(?=D$)")) * 24
-}
+ge_time_present <- ge_time_present[vapply(ge_time_present, time_to_hours, numeric(1)) <= max_ge_hours]
 ge_time_order <- ge_time_present[order(vapply(ge_time_present, time_to_hours, numeric(1)))]
 
 df_counts_ge <- df_clinical_all %>%
-  filter(study_accession %in% study_order, !is.na(time)) %>%
+  filter(study_accession %in% study_order, time %in% ge_time_order) %>%
   mutate(
     timepoint = factor(time, levels = ge_time_order),
     study_accession = factor(study_accession, levels = rev(study_order))
   ) %>%
-  filter(!is.na(timepoint)) %>%
   group_by(study_accession, timepoint) %>%
   summarise(n_participants = n_distinct(participant_id), .groups = "drop") %>%
   complete(study_accession, timepoint, fill = list(n_participants = 0))
@@ -177,10 +183,8 @@ p_combined <- (p1 / p2 / p3) +
   plot_layout(guides = "collect") +
   plot_annotation(
     title = "Availability of Antibody and Gene Expression Measurements (Influenza Studies)",
-    subtitle = "Antibody panels show exact collection days (<= day 35); gene expression panel shows harmonised timepoints",
     theme = theme(
-      plot.title    = element_text(size = 19, face = "bold", hjust = 0.5),
-      plot.subtitle = element_text(size = 13, hjust = 0.5)
+      plot.title = element_text(size = 19, face = "bold", hjust = 0.5)
     )
   )
 
