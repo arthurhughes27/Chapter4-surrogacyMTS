@@ -213,8 +213,7 @@ Outputs:
 
 - Low-dimensional data application (Figure 3)
 - High-dimensional data application (Figures 3, 4)
-- Ebola vaccine studies application (ebovac2 and prevac; hamburg excluded)
-- Supplementary analyses (Supplementary Web Figures 9-14; additional influenza timepoint sensitivity analyses at days 2, 3 and 7)
+- Supplementary analyses (Supplementary Web Figures 9-14; additional influenza timepoint sensitivity analyses at days 1, 2, 3 and 7; Ebola vaccine studies application (ebovac2 and prevac; hamburg excluded))
 
 Saved in:
 
