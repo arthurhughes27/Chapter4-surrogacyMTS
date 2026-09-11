@@ -76,7 +76,21 @@ label_fun_day <- function(x) paste0("Day ", x)
 # Panel C: Gene expression sample availability by study and timepoint
 # =============================================================================
 
-ge_time_order <- c("P+0D", "P+3H", "P+1D", "P+2D", "P+3D", "P+7D")
+# Derived from the timepoints actually present for these studies (rather than
+# a fixed list), so an unused timepoint (e.g. "P+3H", relevant to other
+# vaccines' prime/boost designs but not sampled here) doesn't show up as an
+# empty column
+ge_time_present <- df_clinical_all %>%
+  filter(study_accession %in% study_order, !is.na(time)) %>%
+  distinct(time) %>%
+  pull(time) %>%
+  as.character()
+
+time_to_hours <- function(x) {
+  if (str_detect(x, "H$")) as.numeric(str_extract(x, "\\d+(?=H$)"))
+  else as.numeric(str_extract(x, "\\d+(?=D$)")) * 24
+}
+ge_time_order <- ge_time_present[order(vapply(ge_time_present, time_to_hours, numeric(1)))]
 
 df_counts_ge <- df_clinical_all %>%
   filter(study_accession %in% study_order, !is.na(time)) %>%
