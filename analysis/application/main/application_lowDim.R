@@ -196,8 +196,8 @@ rise_fit_ARMD <- rise.screen.meta(
   studyone = Centerone_ARMD,
   studyzero = Centerzero_ARMD,
   alpha = 0.05,
-  epsilon.study = 0.1,
-  epsilon.meta = 0.1,
+  epsilon.study = 0.2,
+  epsilon.meta = 0.2,
   p.correction = "none",
   return.study.similarity.plot = FALSE,
   paired.all = FALSE,
@@ -441,7 +441,7 @@ jointModel_plot_Ovarian <- trial_effects_Ovarian %>%
   ),
   expand = c(0, 0)) +
   coord_fixed(ratio = 1) +
-  labs(x = "Treatment effect on log(progression-free survival)", y = "Treatment effect on log(overall survival)", size = "Center N") +
+  labs(x = "Treatment effect on log(PFS)", y = "Treatment effect on log(OS)", size = "Center N") +
   theme_minimal(base_size = 18) +
   theme(
     plot.title = element_text(size = 25, hjust = 0.5, face = "bold"),
@@ -464,8 +464,8 @@ rise_fit_Ovarian <- rise.screen.meta(
   studyone = Centerone_Ovarian,
   studyzero = Centerzero_Ovarian,
   alpha = 0.05,
-  epsilon.study = 0.1,
-  epsilon.meta = 0.1,
+  epsilon.study = 0.2,
+  epsilon.meta = 0.2,
   p.correction = "none",
   return.study.similarity.plot = FALSE,
   paired.all = FALSE,
@@ -554,7 +554,7 @@ riseMeta_plot_Ovarian <- gamma_df_Ovarian %>%
   scale_x_continuous(limits = c(-0.1, 1.1), expand = c(0, 0)) +
   scale_y_continuous(limits = c(-0.1, 1.1), expand = c(0, 0)) +
   coord_fixed(ratio = 1) +
-  labs(x = "Treatment effect on log(progression-free survival)", y = "Treatment effect on log(overall survival)", size = "Center N") +
+  labs(x = "Treatment effect on log(PFS)", y = "Treatment effect on log(OS)", size = "Center N") +
   theme_minimal(base_size = 18) +
   theme(
     plot.title = element_text(size = 25, hjust = 0.5, face = "bold"),
