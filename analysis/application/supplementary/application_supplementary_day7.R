@@ -21,10 +21,11 @@ hyperparameter_list = list(
   meta.analysis.method = "RE",
   # meta analysis method (random or fixed effects)
   test = "knha",
+  test.target = "pi",
   # method for variance estimation of pooled effect
   alternative = "two.sided",
   # form of alternative hypothesis
-  epsilon.meta.mode = "mean.power",
+  epsilon.meta.mode = "user",
   # choice of how to define epsilon
   paired.all = TRUE,
   # paired mode
@@ -36,13 +37,13 @@ hyperparameter_list = list(
   # Numeric hyperparameters for testing procedure
   alpha = 0.05,
   # significance level
-  power.want.s.study = 0.8,
+  # power.want.s.study = 0.8,
   # within-study power for epsilon
-  epsilon.meta = NULL,
+  epsilon.meta = 0.2,
   # fixed value for epsilon
-  epsilon.study = NULL,
+  epsilon.study = 0.2,
   # epsilon for within-study testing
-  p.correction = "BH",
+  p.correction = "none",
   # multiplicity correction for p-values
   u.y.hyp = NULL,
   # hypothesised effect size on y
@@ -179,6 +180,7 @@ rise_screen_result <- rise.screen.meta(
   show.pooled.effect           = hyperparameter_list$show.pooled.effect,
   return.study.similarity.plot = hyperparameter_list$return.study.similarity.plot,
   test                         = hyperparameter_list$test,
+  test.target                  = hyperparameter_list$test.target,
   meta.analysis.method         = hyperparameter_list$meta.analysis.method,
   n.cores                      = hyperparameter_list$n.cores,
   screen.plot.topN             = hyperparameter_list$screen.plot.topN,
@@ -245,6 +247,7 @@ rise_evaluation_result <- rise.evaluate.meta(
   p.correction         = hyperparameter_list$p.correction,
   show.pooled.effect   = hyperparameter_list$show.pooled.effect,
   test                 = hyperparameter_list$test,
+  test.target          = hyperparameter_list$test.target,
   epsilon.meta.mode    = hyperparameter_list$epsilon.meta.mode,
   power.want.s.study   = hyperparameter_list$power.want.s.study,
   meta.analysis.method = hyperparameter_list$meta.analysis.method,

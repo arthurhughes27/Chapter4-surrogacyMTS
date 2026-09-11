@@ -16,17 +16,13 @@ df_merged_all = readRDS(p_load_merged_all)
 
 # Identify participants with entries at BOTH P+0D and P+1D
 participants_both_times <- df_merged_all %>%
-  filter(time %in% c("P+0D", "P+1D")) %>%
-  distinct(participant_id, time) %>%
-  count(participant_id) %>%
-  filter(n == 2) %>%
-  pull(participant_id)
+  filter(time %in% c("P+0D"))
 
 df <- df_merged_all %>%
   filter(
     study_accession == "SDY1276",
-    !is.na(ab_p_28),!is.na(ab_p_0),
-    participant_id %in% participants_both_times
+    !is.na(ab_p_0),
+    time == "P+0D"
   ) %>%
   arrange(participant_id) %>%
   dplyr::select(where( ~ !any(is.na(.))))
@@ -45,11 +41,13 @@ gene_cols <- df %>%
   dplyr::select(a1cf:zzz3) %>%
   names()
 
-gene_cols = gene_cols[1:100]
+# gene_cols = gene_cols[1:100]
 
 data <- df %>%
   filter(time == "P+0D") %>%
   dplyr::select(ab_p_0, all_of(gene_cols))
+
+# data$ab_p_0 = log2(data$ab_p_0)
 
 # Function to run a battery of MVN bivariate normality tests for one
 # (response, gene) pair. All tests are run for a given gene within the same
@@ -154,3 +152,7 @@ bvn_latex_table <- kable(
   row_spec(0, bold = TRUE)
 
 writeLines(bvn_latex_table, fs::path(tables_path, "bvn_rejection_table.tex"))
+
+gc()
+
+rm(list = ls())

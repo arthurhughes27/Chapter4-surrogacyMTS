@@ -19,6 +19,7 @@ hyperparameter_list = list(
   meta.analysis.method = "RE",
   # meta analysis method (random or fixed effects)
   test = "knha",
+  test.target = "ci",
   # method for variance estimation of pooled effect
   alternative = "two.sided",
   # form of alternative hypothesis
@@ -169,7 +170,7 @@ rise_screen_result <- rise.screen.meta(
   epsilon.meta.mode            = hyperparameter_list$epsilon.meta.mode,
   power.want.s.study           = hyperparameter_list$power.want.s.study,
   epsilon.meta                 = hyperparameter_list$epsilon.meta,
-  alternative                  = hyperparameter_list$alternative ,
+  alternative                  = hyperparameter_list$alternative,
   paired.all                   = hyperparameter_list$paired.all,
   return.all.screen            = hyperparameter_list$return.all.screen,
   epsilon.study                = hyperparameter_list$epsilon.study,
@@ -177,6 +178,7 @@ rise_screen_result <- rise.screen.meta(
   show.pooled.effect           = hyperparameter_list$show.pooled.effect,
   return.study.similarity.plot = hyperparameter_list$return.study.similarity.plot,
   test                         = hyperparameter_list$test,
+  test.target                  = hyperparameter_list$test.target,
   meta.analysis.method         = hyperparameter_list$meta.analysis.method,
   n.cores                      = hyperparameter_list$n.cores,
   screen.plot.topN             = hyperparameter_list$screen.plot.topN,
@@ -243,6 +245,7 @@ rise_evaluation_result <- rise.evaluate.meta(
   p.correction         = hyperparameter_list$p.correction,
   show.pooled.effect   = hyperparameter_list$show.pooled.effect,
   test                 = hyperparameter_list$test,
+  test.target          = hyperparameter_list$test.target,
   epsilon.meta.mode    = hyperparameter_list$epsilon.meta.mode,
   power.want.s.study   = hyperparameter_list$power.want.s.study,
   meta.analysis.method = hyperparameter_list$meta.analysis.method,
@@ -276,4 +279,4 @@ ggsave(
   units    = "cm"
 )
 
-rm(list = ls())
+# rm(list = ls())
