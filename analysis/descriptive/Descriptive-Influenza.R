@@ -14,9 +14,11 @@ processed_data_path        <- fs::path("data")
 descriptive_figures_folder <- fs::path("output", "figures", "descriptive")
 
 # ---- Load data ----
-# Per-assay (nAb / hai) antibody response availability, before the
-# chosen-assay-per-study collapsing used elsewhere in the pipeline
-is2_immResp_by_assay <- readRDS(fs::path(processed_data_path, "is2", "is2_immResp_by_assay.rds"))
+# Per-assay (nAb / hai) antibody response availability at the EXACT collection
+# day (not the +-7 day nominal-timepoint windowing used for the analysis
+# proper), and before the chosen-assay-per-study collapsing used elsewhere in
+# the pipeline
+is2_immResp_by_assay <- readRDS(fs::path(processed_data_path, "is2", "is2_immResp_by_assay_exact.rds"))
 
 # Harmonised clinical data (one row per GE sample) used for the GE panel
 df_clinical_all <- readRDS(fs::path(processed_data_path, "df_clinical_all.rds"))
@@ -31,20 +33,35 @@ study_order <- c(
 study_order <- intersect(study_order, unique(is2_immResp_by_assay$study_accession))
 
 # =============================================================================
-# Panels A/B: Antibody measurement availability (nAb, HAI) by study and
-# nominal post-vaccination day
+# Panels A/B: Antibody measurement availability (nAb, HAI) by study and EXACT
+# collection day (not the +-7 day nominal timepoint used for the analysis
+# proper, e.g. "day 28" there covers measurements from day 21-35). Restricted
+# to day <= 35, matching the latest nominal timepoint (28 +- 7 days) used in
+# the analysis.
 # =============================================================================
 
-nominal_day_order <- c(0, 7, 14, 28, 56, 63, 84, 180, 365)
+max_day <- 35
 
 count_by_assay <- function(assay_name) {
-  is2_immResp_by_assay %>%
-    filter(assay == assay_name, study_accession %in% study_order, !is.na(response_mean)) %>%
+  df <- is2_immResp_by_assay %>%
+    filter(
+      assay == assay_name,
+      study_accession %in% study_order,
+      !is.na(response_mean),
+      study_time_collected <= max_day
+    ) %>%
+    # Round to the nearest tenth of a day purely for a manageable, readable
+    # x-axis (raw collection days can carry many decimal places) - this is
+    # still the exact day, not the +-7 day nominal timepoint used elsewhere
+    mutate(study_time_collected = round(study_time_collected, 1))
+
+  day_order <- sort(unique(df$study_time_collected))
+
+  df %>%
     mutate(
-      timepoint = factor(study_time_collected, levels = nominal_day_order),
+      timepoint = factor(study_time_collected, levels = day_order),
       study_accession = factor(study_accession, levels = rev(study_order))
     ) %>%
-    filter(!is.na(timepoint)) %>%
     group_by(study_accession, timepoint) %>%
     summarise(n_participants = n_distinct(participant_id), .groups = "drop") %>%
     complete(study_accession, timepoint, fill = list(n_participants = 0))
@@ -146,8 +163,10 @@ p_combined <- (p1 / p2 / p3) +
   plot_layout(guides = "collect") +
   plot_annotation(
     title = "Availability of Antibody and Gene Expression Measurements (Influenza Studies)",
+    subtitle = "Antibody panels show exact collection days (<= day 35); gene expression panel shows harmonised timepoints",
     theme = theme(
-      plot.title = element_text(size = 19, face = "bold", hjust = 0.5)
+      plot.title    = element_text(size = 19, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(size = 13, hjust = 0.5)
     )
   )
 

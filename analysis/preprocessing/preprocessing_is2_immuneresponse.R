@@ -54,6 +54,21 @@ is2_studies <- is2_clinical %>%
 response_raw_merged_studies <- response_raw_merged %>%
   inner_join(is2_studies, by = "participant_id")  # equivalent to merge(..., all = F), but keeps dplyr pipe + avoids row-order surprises
 
+# ---- Save per-assay response availability at the EXACT (unwindowed) collection
+# day, for descriptive/availability figures that want to show the true spread
+# of collection days rather than the +-7 day nominal-timepoint windowing
+# applied below for the analysis proper ----
+response_summary_exact <- response_raw_merged_studies %>%
+  group_by(participant_id, study_time_collected, assay, study_accession, group_long) %>%
+  summarise(
+    response_mean = mean(value_preferred, na.rm = TRUE),
+    n_analytes    = n_distinct(response_strain_analyte),
+    .groups = "drop"
+  )
+
+saveRDS(response_summary_exact,
+        file = fs::path(processed_data_folder, "is2_immResp_by_assay_exact.rds"))
+
 # ---- Assign each raw collection day to a nominal immune response timepoint ----
 # Timepoints are defined to match the harmonised `ab_p_DAY` columns used
 # downstream (see preprocessing_clinical_harmonisation.R). A raw collection
