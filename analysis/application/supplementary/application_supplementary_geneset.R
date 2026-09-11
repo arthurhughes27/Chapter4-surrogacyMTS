@@ -156,8 +156,48 @@ for (val in grid) {
     dplyr::select(a1cf:zzz3) %>%
     colnames()
   
-  # ----- Screening on training data -----
-  
+  # Runs the RISE-meta screening stage with the given inputs, reused for both
+  # the split-data and full-data screening calls below
+  run_screen <- function(inputs, hp) {
+    rise.screen.meta(
+      yone                          = inputs$yone,
+      yzero                         = inputs$yzero,
+      sone                          = inputs$sone,
+      szero                         = inputs$szero,
+      studyone                      = inputs$studyone,
+      studyzero                     = inputs$studyzero,
+      alpha                         = hp$alpha,
+      epsilon.meta.mode             = hp$epsilon.meta.mode,
+      power.want.s.study            = hp$power.want.s.study,
+      epsilon.meta                  = hp$epsilon.meta,
+      alternative                   = hp$alternative,
+      paired.all                    = hp$paired.all,
+      return.all.screen             = hp$return.all.screen,
+      epsilon.study                 = hp$epsilon.study,
+      p.correction                  = hp$p.correction,
+      show.pooled.effect            = hp$show.pooled.effect,
+      return.study.similarity.plot  = hp$return.study.similarity.plot,
+      test                          = hp$test,
+      meta.analysis.method          = hp$meta.analysis.method,
+      n.cores                       = hp$n.cores,
+      screen.plot.topN              = hp$screen.plot.topN,
+      screen.plot.point.estimate    = hp$screen.plot.point.estimate,
+      return.evaluate.results       = hp$return.evaluate.results,
+      return.fit.plot               = hp$return.fit.plot,
+      return.forest.plot            = hp$return.forest.plot,
+      normalise.weights             = hp$normalise.weights,
+      return.screen.plot            = hp$return.screen.plot,
+      weight.mode                   = hp$weight.mode,
+      return.all.weights            = hp$return.all.weights,
+      paired.studies                = hp$paired.studies,
+      u.y.hyp                       = hp$u.y.hyp
+    )
+  }
+
+  tag = ifelse(val == "BG3M", "BG3M", "none")
+
+  # ----- Screening on (split) training data -----
+
   train_inputs <- extract_rise_inputs(
     df = df_train,
     predictor_names = predictor_names,
@@ -165,129 +205,139 @@ for (val in grid) {
     geneset_names = GS_list[["geneset.names.descriptions"]],
     aggregation_function = hyperparameter_list$aggregation_function
   )
-  
+
   # Screen for surrogate markers across studies using BH-corrected meta-analysis
-  rise_screen_result <- rise.screen.meta(
-    yone                         = train_inputs$yone,
-    yzero                        = train_inputs$yzero,
-    sone                         = train_inputs$sone,
-    szero                        = train_inputs$szero,
-    studyone                     = train_inputs$studyone,
-    studyzero                    = train_inputs$studyzero,
-    alpha                        = hyperparameter_list$alpha,
-    epsilon.meta.mode            = hyperparameter_list$epsilon.meta.mode,
-    power.want.s.study           = hyperparameter_list$power.want.s.study,
-    epsilon.meta                 = hyperparameter_list$epsilon.meta,
-    alternative                  = hyperparameter_list$alternative ,
-    paired.all                   = hyperparameter_list$paired.all,
-    return.all.screen            = hyperparameter_list$return.all.screen,
-    epsilon.study                = hyperparameter_list$epsilon.study,
-    p.correction                 = hyperparameter_list$p.correction,
-    show.pooled.effect           = hyperparameter_list$show.pooled.effect,
-    return.study.similarity.plot = hyperparameter_list$return.study.similarity.plot,
-    test                         = hyperparameter_list$test,
-    meta.analysis.method         = hyperparameter_list$meta.analysis.method,
-    n.cores                      = hyperparameter_list$n.cores,
-    screen.plot.topN             = hyperparameter_list$screen.plot.topN,
-    screen.plot.point.estimate   = hyperparameter_list$screen.plot.point.estimate,
-    return.evaluate.results      = hyperparameter_list$return.evaluate.results,
-    return.fit.plot              = hyperparameter_list$return.fit.plot,
-    return.forest.plot           = hyperparameter_list$return.forest.plot,
-    normalise.weights            = hyperparameter_list$normalise.weights,
-    return.screen.plot           = hyperparameter_list$return.screen.plot,
-    weight.mode                  = hyperparameter_list$weight.mode,
-    return.all.weights           = hyperparameter_list$return.all.weights,
-    paired.studies               = hyperparameter_list$paired.studies,
-    u.y.hyp                      = hyperparameter_list$u.y.hyp
-  )
-  
-  screen_output = extract_rise_outputs(screen_result = rise_screen_result)
-  
-  # LaTeX table formatting the significant results of the analysis
-  screen_output$screen_table
-  
-  # Extract and show the graphics for the screening stage
-  screen_plot_1 = screen_output$screen_plot
-  screen_forest_1 = screen_output$screen_forest
-  screen_fit_1 = screen_output$screen_fit
-  
-  screen_plot_1
-  screen_forest_1
-  screen_fit_1
-  
-  # Save these graphics with an informative name
-  tag = ifelse(val == "BG3M", "BG3M", "none")
-  
-  ggsave(
-    filename = paste0("risemeta_screening_", tag, "_.pdf"),
-    path     = application_figures_folder,
-    plot     = screen_plot_1,
-    width    = hyperparameter_list$screen.plot.width,
-    height   = hyperparameter_list$screen.plot.height,
-    units    = "cm"
-  )
-  
-  # ----- Evaluation on test data -----
-  test_inputs <- extract_rise_inputs(
-    df_test,
-    predictor_names = predictor_names,
-    genesets = GS_list[["genesets"]],
-    geneset_names = GS_list[["geneset.names.descriptions"]],
-    aggregation_function = hyperparameter_list$aggregation_function
-  )
-  
-  # Evaluate significant markers from screening on held-out test data
-  rise_evaluation_result <- rise.evaluate.meta(
-    yone                 = test_inputs$yone,
-    yzero                = test_inputs$yzero,
-    sone                 = test_inputs$sone,
-    szero                = test_inputs$szero,
-    studyone             = test_inputs$studyone,
-    studyzero            = test_inputs$studyzero,
-    screening.weights    = rise_screen_result[["screening.weights"]],
-    markers              = rise_screen_result[["significant.markers"]],
-    alpha                = hyperparameter_list$alpha,
-    epsilon.meta         = hyperparameter_list$epsilon.meta,
-    alternative          = hyperparameter_list$alternative,
-    paired.all           = hyperparameter_list$paired.all,
-    epsilon.study        = hyperparameter_list$epsilon.study,
-    p.correction         = hyperparameter_list$p.correction,
-    show.pooled.effect   = hyperparameter_list$show.pooled.effect,
-    test                 = hyperparameter_list$test,
-    epsilon.meta.mode    = hyperparameter_list$epsilon.meta.mode,
-    power.want.s.study   = hyperparameter_list$power.want.s.study,
-    meta.analysis.method = hyperparameter_list$meta.analysis.method,
-    return.fit.plot      = hyperparameter_list$return.fit.plot,
-    return.all.evaluate  = hyperparameter_list$return.all.evaluate,
-    return.forest.plot   = hyperparameter_list$return.forest.plot,
-    weight.mode          = hyperparameter_list$weight.mode,
-    evaluate.weights     = hyperparameter_list$evaluate.weights,
-    paired.studies       = hyperparameter_list$paired.studies,
-    n.cores              = hyperparameter_list$n.cores,
-    u.y.hyp              = hyperparameter_list$u.y.hyp
-  )
-  
-  evaluation_output = extract_rise_outputs(evaluation_result = rise_evaluation_result)
-  
-  evaluation_output$evaluation_table
-  
-  # Extract and show the graphics for the screening stage
-  evaluation_forest_1 = evaluation_output$evaluation_forest
-  evaluation_fit_1 = evaluation_output$evaluation_fit
-  
-  evaluation_forest_1
-  evaluation_fit_1
-  
-  tag = ifelse(val == "BG3M", "BG3M", "none")
-  
-  ggsave(
-    filename = paste0("risemeta_evaluation_", tag, "_.pdf"),
-    path     = application_figures_folder,
-    plot     = evaluation_forest_1,
-    width    = hyperparameter_list$forest.plot.width,
-    height   = hyperparameter_list$forest.plot.height,
-    units    = "cm"
-  )
-  
+  rise_screen_result <- run_screen(train_inputs, hyperparameter_list)
+
+  n_significant <- length(rise_screen_result[["significant.markers"]])
+
+  if (n_significant > 0) {
+    # ----- Significant markers found: proceed as usual, evaluating on the
+    # held-out test data -----
+    screen_output = extract_rise_outputs(screen_result = rise_screen_result)
+
+    # LaTeX table formatting the significant results of the analysis
+    screen_output$screen_table
+
+    # Extract and show the graphics for the screening stage
+    screen_plot_1 = screen_output$screen_plot
+    screen_forest_1 = screen_output$screen_forest
+    screen_fit_1 = screen_output$screen_fit
+
+    screen_plot_1
+    screen_forest_1
+    screen_fit_1
+
+    # Save these graphics with an informative name
+    ggsave(
+      filename = paste0("risemeta_screening_", tag, "_.pdf"),
+      path     = application_figures_folder,
+      plot     = screen_plot_1,
+      width    = hyperparameter_list$screen.plot.width,
+      height   = hyperparameter_list$screen.plot.height,
+      units    = "cm"
+    )
+
+    # ----- Evaluation on test data -----
+    test_inputs <- extract_rise_inputs(
+      df_test,
+      predictor_names = predictor_names,
+      genesets = GS_list[["genesets"]],
+      geneset_names = GS_list[["geneset.names.descriptions"]],
+      aggregation_function = hyperparameter_list$aggregation_function
+    )
+
+    # Evaluate significant markers from screening on held-out test data
+    rise_evaluation_result <- rise.evaluate.meta(
+      yone                 = test_inputs$yone,
+      yzero                = test_inputs$yzero,
+      sone                 = test_inputs$sone,
+      szero                = test_inputs$szero,
+      studyone             = test_inputs$studyone,
+      studyzero            = test_inputs$studyzero,
+      screening.weights    = rise_screen_result[["screening.weights"]],
+      markers              = rise_screen_result[["significant.markers"]],
+      alpha                = hyperparameter_list$alpha,
+      epsilon.meta         = hyperparameter_list$epsilon.meta,
+      alternative          = hyperparameter_list$alternative,
+      paired.all           = hyperparameter_list$paired.all,
+      epsilon.study        = hyperparameter_list$epsilon.study,
+      p.correction         = hyperparameter_list$p.correction,
+      show.pooled.effect   = hyperparameter_list$show.pooled.effect,
+      test                 = hyperparameter_list$test,
+      epsilon.meta.mode    = hyperparameter_list$epsilon.meta.mode,
+      power.want.s.study   = hyperparameter_list$power.want.s.study,
+      meta.analysis.method = hyperparameter_list$meta.analysis.method,
+      return.fit.plot      = hyperparameter_list$return.fit.plot,
+      return.all.evaluate  = hyperparameter_list$return.all.evaluate,
+      return.forest.plot   = hyperparameter_list$return.forest.plot,
+      weight.mode          = hyperparameter_list$weight.mode,
+      evaluate.weights     = hyperparameter_list$evaluate.weights,
+      paired.studies       = hyperparameter_list$paired.studies,
+      n.cores              = hyperparameter_list$n.cores,
+      u.y.hyp              = hyperparameter_list$u.y.hyp
+    )
+
+    evaluation_output = extract_rise_outputs(evaluation_result = rise_evaluation_result)
+
+    evaluation_output$evaluation_table
+
+    # Extract and show the graphics for the evaluation stage
+    evaluation_forest_1 = evaluation_output$evaluation_forest
+    evaluation_fit_1 = evaluation_output$evaluation_fit
+
+    evaluation_forest_1
+    evaluation_fit_1
+
+    ggsave(
+      filename = paste0("risemeta_evaluation_", tag, "_.pdf"),
+      path     = application_figures_folder,
+      plot     = evaluation_forest_1,
+      width    = hyperparameter_list$forest.plot.width,
+      height   = hyperparameter_list$forest.plot.height,
+      units    = "cm"
+    )
+
+  } else {
+    # ----- No significant markers on the split training data: an evaluation
+    # stage isn't possible. Re-run screening on the FULL (unsplit) data
+    # instead, and interpret those results as the final output. -----
+    preprocessed_data_list_full = preprocess_data(
+      df = df,
+      tp = hyperparameter_list$tp,
+      screen.fraction = 1,
+      seed = hyperparameter_list$seed
+    )
+
+    df_full = preprocessed_data_list_full[["df.screen"]]
+
+    full_inputs <- extract_rise_inputs(
+      df = df_full,
+      predictor_names = predictor_names,
+      genesets = GS_list[["genesets"]],
+      geneset_names = GS_list[["geneset.names.descriptions"]],
+      aggregation_function = hyperparameter_list$aggregation_function
+    )
+
+    rise_screen_result_full <- run_screen(full_inputs, hyperparameter_list)
+
+    screen_output_full = extract_rise_outputs(screen_result = rise_screen_result_full)
+
+    screen_output_full$screen_table
+
+    screen_output_full$screen_plot
+    screen_output_full$screen_forest
+    screen_output_full$screen_fit
+
+    ggsave(
+      filename = paste0("risemeta_screening_", tag, "_fulldata.pdf"),
+      path     = application_figures_folder,
+      plot     = screen_output_full$screen_plot,
+      width    = hyperparameter_list$screen.plot.width,
+      height   = hyperparameter_list$screen.plot.height,
+      units    = "cm"
+    )
+  }
+
 }
 rm(list = ls())
