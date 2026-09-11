@@ -110,6 +110,12 @@ response_summary <- response_raw_merged_studies %>%
     .groups = "drop"
   )
 
+# ---- Save per-assay response availability (both nAb and hai, before the
+# chosen-assay-per-study collapsing below) for descriptive/availability
+# figures that need to distinguish the two assays ----
+p_save_by_assay <- fs::path(processed_data_folder, "is2_immResp_by_assay.rds")
+saveRDS(response_summary, file = p_save_by_assay)
+
 # ---- Choose one assay per study, preferring nAb over hai ----
 assay_priority <- c("nAb", "hai")
 
