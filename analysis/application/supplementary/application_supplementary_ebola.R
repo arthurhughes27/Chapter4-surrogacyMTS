@@ -1,4 +1,4 @@
-# Script to run the main analysis for the Ebola vaccine studies, using the same
+# Supplementary analysis for the Ebola vaccine studies, using the same
 # RISE-meta screening/evaluation methodology as the influenza (TIV) application
 # (see application_highDim.R), adapted to the Ebola studies' trial designs:
 #
@@ -12,6 +12,13 @@
 #
 # Each study + vaccine arm combination (e.g. "ebovac2-Ad26MVA", "prevac-rVSV",
 # "prevac-Ad26MVA") is treated as its own "study" in the meta-analysis.
+#
+# As in the influenza timepoint supplementary applications: if no significant
+# markers are found at the screening stage on the (split) training data, an
+# evaluation stage on held-out test data isn't possible. In that case,
+# screening is re-run on the FULL (unsplit) data instead, and those results
+# are interpreted as the final output - rather than reporting an evaluation on
+# a held-out set that was never reached.
 
 # Libraries
 library(tidyverse)
@@ -28,7 +35,7 @@ hyperparameter_list = list(
   response_post_col = "ab_p_365",
   # Pre/post immune response columns (baseline vs. 1-year post-prime antibody level,
   # the only "far" post-vaccination readout with non-missing data in both studies)
-  screen.fraction = 1,
+  screen.fraction = 0.66,
   # Fraction of data for screening
   seed = 10012025,
   # seed for random data splitting
@@ -102,7 +109,7 @@ sapply(list.files("R/", pattern = "\\.R$", full.names = TRUE), source)
 
 # Paths to processed data and output figures
 processed_data_folder <- fs::path("data")
-application_figures_folder <- fs::path("output", "figures", "application", "main")
+application_figures_folder <- fs::path("output", "figures", "application", "supplementary")
 
 # Load merged gene expression and GS_list gene set objects
 df <- readRDS(fs::path(processed_data_folder, "df_merged_all.rds"))
@@ -218,6 +225,44 @@ build_ebola_inputs <- function(df_ebovac2_split, df_prevac_split_df) {
   combine_rise_inputs(input_list)
 }
 
+# Runs the RISE-meta screening stage with the given inputs, reused for both
+# the split-data and full-data screening calls below
+run_screen <- function(inputs, hp) {
+  rise.screen.meta(
+    yone                         = inputs$yone,
+    yzero                        = inputs$yzero,
+    sone                         = inputs$sone,
+    szero                        = inputs$szero,
+    studyone                     = inputs$studyone,
+    studyzero                    = inputs$studyzero,
+    alpha                        = hp$alpha,
+    epsilon.meta.mode            = hp$epsilon.meta.mode,
+    power.want.s.study           = hp$power.want.s.study,
+    epsilon.meta                 = hp$epsilon.meta,
+    alternative                  = hp$alternative,
+    paired.all                   = hp$paired.all,
+    paired.studies               = hp$paired.studies,
+    return.all.screen            = hp$return.all.screen,
+    epsilon.study                = hp$epsilon.study,
+    p.correction                 = hp$p.correction,
+    show.pooled.effect           = hp$show.pooled.effect,
+    return.study.similarity.plot = hp$return.study.similarity.plot,
+    test                         = hp$test,
+    meta.analysis.method         = hp$meta.analysis.method,
+    n.cores                      = hp$n.cores,
+    screen.plot.topN             = hp$screen.plot.topN,
+    screen.plot.point.estimate   = hp$screen.plot.point.estimate,
+    return.evaluate.results      = hp$return.evaluate.results,
+    return.fit.plot              = hp$return.fit.plot,
+    return.forest.plot           = hp$return.forest.plot,
+    normalise.weights            = hp$normalise.weights,
+    return.screen.plot           = hp$return.screen.plot,
+    weight.mode                  = hp$weight.mode,
+    return.all.weights           = hp$return.all.weights,
+    u.y.hyp                      = hp$u.y.hyp
+  )
+}
+
 # Sample sizes per study unit, for reporting
 bind_rows(
   preprocessed_ebovac2[["df.full"]] %>%
@@ -230,7 +275,7 @@ bind_rows(
   group_by(study_accession) %>%
   summarize(n = n())
 
-# ----- Screening on training data -----
+# ----- Screening on (split) training data -----
 
 train_inputs <- build_ebola_inputs(
   df_ebovac2_split = preprocessed_ebovac2[["df.screen"]],
@@ -238,118 +283,120 @@ train_inputs <- build_ebola_inputs(
 )
 
 # Screen for surrogate markers across studies using BH-corrected meta-analysis
-rise_screen_result <- rise.screen.meta(
-  yone                         = train_inputs$yone,
-  yzero                        = train_inputs$yzero,
-  sone                         = train_inputs$sone,
-  szero                        = train_inputs$szero,
-  studyone                     = train_inputs$studyone,
-  studyzero                    = train_inputs$studyzero,
-  alpha                        = hyperparameter_list$alpha,
-  epsilon.meta.mode            = hyperparameter_list$epsilon.meta.mode,
-  power.want.s.study           = hyperparameter_list$power.want.s.study,
-  epsilon.meta                 = hyperparameter_list$epsilon.meta,
-  alternative                  = hyperparameter_list$alternative,
-  paired.all                   = hyperparameter_list$paired.all,
-  paired.studies               = hyperparameter_list$paired.studies,
-  return.all.screen            = hyperparameter_list$return.all.screen,
-  epsilon.study                = hyperparameter_list$epsilon.study,
-  p.correction                 = hyperparameter_list$p.correction,
-  show.pooled.effect           = hyperparameter_list$show.pooled.effect,
-  return.study.similarity.plot = hyperparameter_list$return.study.similarity.plot,
-  test                         = hyperparameter_list$test,
-  meta.analysis.method         = hyperparameter_list$meta.analysis.method,
-  n.cores                      = hyperparameter_list$n.cores,
-  screen.plot.topN             = hyperparameter_list$screen.plot.topN,
-  screen.plot.point.estimate   = hyperparameter_list$screen.plot.point.estimate,
-  return.evaluate.results      = hyperparameter_list$return.evaluate.results,
-  return.fit.plot              = hyperparameter_list$return.fit.plot,
-  return.forest.plot           = hyperparameter_list$return.forest.plot,
-  normalise.weights            = hyperparameter_list$normalise.weights,
-  return.screen.plot           = hyperparameter_list$return.screen.plot,
-  weight.mode                  = hyperparameter_list$weight.mode,
-  return.all.weights           = hyperparameter_list$return.all.weights,
-  u.y.hyp                      = hyperparameter_list$u.y.hyp
-)
+rise_screen_result <- run_screen(train_inputs, hyperparameter_list)
 
-screen_output = extract_rise_outputs(screen_result = rise_screen_result)
+n_significant <- length(rise_screen_result[["significant.markers"]])
 
-# LaTeX table formatting the significant results of the analysis
-screen_output$screen_table
+if (n_significant > 0) {
+  # ----- Significant markers found: proceed as usual, evaluating on the
+  # held-out test data -----
+  screen_output = extract_rise_outputs(screen_result = rise_screen_result)
 
-# Extract and show the graphics for the screening stage
-screen_plot_1 = screen_output$screen_plot
-screen_forest_1 = screen_output$screen_forest
-screen_fit_1 = screen_output$screen_fit
+  # LaTeX table formatting the significant results of the analysis
+  screen_output$screen_table
 
-screen_plot_1
-screen_forest_1
-screen_fit_1
+  # Extract and show the graphics for the screening stage
+  screen_plot_1 = screen_output$screen_plot
+  screen_forest_1 = screen_output$screen_forest
+  screen_fit_1 = screen_output$screen_fit
 
-ggsave(
-  filename = "risemeta_ebola_screening.pdf",
-  path     = application_figures_folder,
-  plot     = screen_plot_1,
-  width    = hyperparameter_list$screen.plot.width,
-  height   = hyperparameter_list$screen.plot.height,
-  units    = "cm"
-)
+  screen_plot_1
+  screen_forest_1
+  screen_fit_1
 
-# ----- Evaluation on test data -----
+  ggsave(
+    filename = "risemeta_ebola_screening.pdf",
+    path     = application_figures_folder,
+    plot     = screen_plot_1,
+    width    = hyperparameter_list$screen.plot.width,
+    height   = hyperparameter_list$screen.plot.height,
+    units    = "cm"
+  )
 
-test_inputs <- build_ebola_inputs(
-  df_ebovac2_split = preprocessed_ebovac2[["df.evaluate"]],
-  df_prevac_split_df = prevac_split$test
-)
+  # ----- Evaluation on test data -----
 
-# Evaluate significant markers from screening on held-out test data
-rise_evaluation_result <- rise.evaluate.meta(
-  yone                 = test_inputs$yone,
-  yzero                = test_inputs$yzero,
-  sone                 = test_inputs$sone,
-  szero                = test_inputs$szero,
-  studyone             = test_inputs$studyone,
-  studyzero            = test_inputs$studyzero,
-  screening.weights    = rise_screen_result[["screening.weights"]],
-  markers              = rise_screen_result[["significant.markers"]],
-  alpha                = hyperparameter_list$alpha,
-  epsilon.meta         = hyperparameter_list$epsilon.meta,
-  alternative          = hyperparameter_list$alternative,
-  paired.all           = hyperparameter_list$paired.all,
-  paired.studies       = hyperparameter_list$paired.studies,
-  epsilon.study        = hyperparameter_list$epsilon.study,
-  p.correction         = hyperparameter_list$p.correction,
-  show.pooled.effect   = hyperparameter_list$show.pooled.effect,
-  test                 = hyperparameter_list$test,
-  epsilon.meta.mode    = hyperparameter_list$epsilon.meta.mode,
-  power.want.s.study   = hyperparameter_list$power.want.s.study,
-  meta.analysis.method = hyperparameter_list$meta.analysis.method,
-  return.fit.plot      = hyperparameter_list$return.fit.plot,
-  return.all.evaluate  = hyperparameter_list$return.all.evaluate,
-  return.forest.plot   = hyperparameter_list$return.forest.plot,
-  weight.mode          = hyperparameter_list$weight.mode,
-  evaluate.weights     = hyperparameter_list$evaluate.weights,
-  n.cores              = hyperparameter_list$n.cores,
-  u.y.hyp              = hyperparameter_list$u.y.hyp
-)
+  test_inputs <- build_ebola_inputs(
+    df_ebovac2_split = preprocessed_ebovac2[["df.evaluate"]],
+    df_prevac_split_df = prevac_split$test
+  )
 
-evaluation_output = extract_rise_outputs(evaluation_result = rise_evaluation_result)
+  # Evaluate significant markers from screening on held-out test data
+  rise_evaluation_result <- rise.evaluate.meta(
+    yone                 = test_inputs$yone,
+    yzero                = test_inputs$yzero,
+    sone                 = test_inputs$sone,
+    szero                = test_inputs$szero,
+    studyone             = test_inputs$studyone,
+    studyzero            = test_inputs$studyzero,
+    screening.weights    = rise_screen_result[["screening.weights"]],
+    markers              = rise_screen_result[["significant.markers"]],
+    alpha                = hyperparameter_list$alpha,
+    epsilon.meta         = hyperparameter_list$epsilon.meta,
+    alternative          = hyperparameter_list$alternative,
+    paired.all           = hyperparameter_list$paired.all,
+    paired.studies       = hyperparameter_list$paired.studies,
+    epsilon.study        = hyperparameter_list$epsilon.study,
+    p.correction         = hyperparameter_list$p.correction,
+    show.pooled.effect   = hyperparameter_list$show.pooled.effect,
+    test                 = hyperparameter_list$test,
+    epsilon.meta.mode    = hyperparameter_list$epsilon.meta.mode,
+    power.want.s.study   = hyperparameter_list$power.want.s.study,
+    meta.analysis.method = hyperparameter_list$meta.analysis.method,
+    return.fit.plot      = hyperparameter_list$return.fit.plot,
+    return.all.evaluate  = hyperparameter_list$return.all.evaluate,
+    return.forest.plot   = hyperparameter_list$return.forest.plot,
+    weight.mode          = hyperparameter_list$weight.mode,
+    evaluate.weights     = hyperparameter_list$evaluate.weights,
+    n.cores              = hyperparameter_list$n.cores,
+    u.y.hyp              = hyperparameter_list$u.y.hyp
+  )
 
-evaluation_output$evaluation_table
+  evaluation_output = extract_rise_outputs(evaluation_result = rise_evaluation_result)
 
-evaluation_forest_1 = evaluation_output$evaluation_forest
-evaluation_fit_1 = evaluation_output$evaluation_fit
+  evaluation_output$evaluation_table
 
-evaluation_forest_1
-evaluation_fit_1
+  evaluation_forest_1 = evaluation_output$evaluation_forest
+  evaluation_fit_1 = evaluation_output$evaluation_fit
 
-ggsave(
-  filename = "risemeta_ebola_evaluation.pdf",
-  path     = application_figures_folder,
-  plot     = evaluation_forest_1,
-  width    = hyperparameter_list$forest.plot.width,
-  height   = hyperparameter_list$forest.plot.height,
-  units    = "cm"
-)
+  evaluation_forest_1
+  evaluation_fit_1
+
+  ggsave(
+    filename = "risemeta_ebola_evaluation.pdf",
+    path     = application_figures_folder,
+    plot     = evaluation_forest_1,
+    width    = hyperparameter_list$forest.plot.width,
+    height   = hyperparameter_list$forest.plot.height,
+    units    = "cm"
+  )
+
+} else {
+  # ----- No significant markers on the split training data: an evaluation
+  # stage isn't possible. Re-run screening on the FULL (unsplit) data
+  # instead, and interpret those results as the final output. -----
+  full_inputs <- build_ebola_inputs(
+    df_ebovac2_split = preprocessed_ebovac2[["df.full"]],
+    df_prevac_split_df = df_prevac_tp
+  )
+
+  rise_screen_result_full <- run_screen(full_inputs, hyperparameter_list)
+
+  screen_output_full = extract_rise_outputs(screen_result = rise_screen_result_full)
+
+  screen_output_full$screen_table
+
+  screen_output_full$screen_plot
+  screen_output_full$screen_forest
+  screen_output_full$screen_fit
+
+  ggsave(
+    filename = "risemeta_ebola_screening_fulldata.pdf",
+    path     = application_figures_folder,
+    plot     = screen_output_full$screen_plot,
+    width    = hyperparameter_list$screen.plot.width,
+    height   = hyperparameter_list$screen.plot.height,
+    units    = "cm"
+  )
+}
 
 rm(list = ls())
