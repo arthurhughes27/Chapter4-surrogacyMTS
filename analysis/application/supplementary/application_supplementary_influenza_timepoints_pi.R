@@ -1,6 +1,8 @@
 # Supplementary analysis: same influenza (TIV) RISE-meta application as
-# application_highDim.R, repeated for gene expression at days 2, 3 and 7
-# post-vaccination (day 1 is the main analysis).
+# application_highDim.R, repeated for gene expression at days 1, 2, 3 and 7
+# post-vaccination, but with test.target = "pi" (predictive-interval based
+# test) instead of "ci" (confidence-interval based test) in rise.screen.meta
+# and rise.evaluate.meta.
 #
 # Difference from the main application: if no significant markers are found
 # at the screening stage on the (split) training data, no evaluation stage is
@@ -15,7 +17,8 @@ library(SurrogateRank)
 library(parallel)
 
 # Define global hyperparameters for analysis (identical to application_highDim.R,
-# except tp is set per-timepoint by run_influenza_timepoint_supplementary())
+# except tp is set per-timepoint by run_influenza_timepoint_supplementary(),
+# and test.target is "pi" instead of "ci")
 hyperparameter_list = list(
   # Hyperparameters for data pre-processing
   screen.fraction = 0.66,
@@ -27,7 +30,7 @@ hyperparameter_list = list(
   meta.analysis.method = "RE",
   # meta analysis method (random or fixed effects)
   test = "knha",
-  test.target = "ci",
+  test.target = "pi",
   # method for variance estimation of pooled effect
   alternative = "two.sided",
   # form of alternative hypothesis
@@ -110,9 +113,10 @@ df_filtered = df %>%
 run_influenza_timepoint_supplementary(
   df_filtered = df_filtered,
   GS_list = GS_list,
-  timepoints = c("P+2D", "P+3D", "P+7D"),
+  timepoints = c("P+1D", "P+2D", "P+3D", "P+7D"),
   hyperparameter_list = hyperparameter_list,
-  application_figures_folder = application_figures_folder
+  application_figures_folder = application_figures_folder,
+  file_tag = "-pi"
 )
 
 rm(list = ls())
