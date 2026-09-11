@@ -6,7 +6,7 @@ library(knitr)
 library(kableExtra)
 
 processed_data_path <- fs::path("data")
-tables_path <- fs::path("output", "tables", "descriptive", "main")
+tables_path <- fs::path("output", "tables", "descriptive", "supplementary")
 
 is2_cell_type <- readRDS(fs::path(processed_data_path, "is2", "is2_cell_type.rds"))
 

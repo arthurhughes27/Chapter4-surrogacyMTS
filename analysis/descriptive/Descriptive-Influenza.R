@@ -194,7 +194,7 @@ ggsave(
   filename = "influenza_sample_availability.pdf",
   path = descriptive_figures_folder,
   plot = p_combined,
-  width = 26, height = 34, units = "cm"
+  width = 35, height = 36, units = "cm"
 )
 
 rm(list = ls())

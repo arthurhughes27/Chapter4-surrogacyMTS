@@ -40,7 +40,7 @@ hyperparameter_list = list(
   # method for variance estimation of pooled effect
   alternative = "two.sided",
   # form of alternative hypothesis
-  epsilon.meta.mode = "mean.power",
+  epsilon.meta.mode = "user",
   # choice of how to define epsilon
   paired.all = FALSE,
   # paired mode (studies not listed in paired.studies are treated as unpaired)
@@ -53,11 +53,11 @@ hyperparameter_list = list(
   # Numeric hyperparameters for testing procedure
   alpha = 0.05,
   # significance level
-  power.want.s.study = 0.8,
+  power.want.s.study = NULL,
   # within-study power for epsilon
-  epsilon.meta = NULL,
+  epsilon.meta = 0.2,
   # fixed value for epsilon
-  epsilon.study = NULL,
+  epsilon.study = 0.2,
   # epsilon for within-study testing
   p.correction = "BH",
   # multiplicity correction for p-values
