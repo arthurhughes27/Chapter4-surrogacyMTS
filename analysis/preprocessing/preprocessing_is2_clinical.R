@@ -292,6 +292,25 @@ assign_color <- function(study_accession_unique) {
 is2_clinical$study_colour <-
   assign_color(is2_clinical$study_accession_unique)
 
+# ---- Summarise cell type (PBMC vs whole blood) used for transcriptomic
+# profiling per study, from the `matrix` column (dropped below) ----
+is2_cell_type <- is2_clinical %>%
+  mutate(cell_type = str_extract(matrix, "PBMC|WholeBlood")) %>%
+  distinct(study_accession, cell_type) %>%
+  group_by(study_accession) %>%
+  summarise(
+    cell_type = case_when(
+      n_distinct(cell_type) > 1        ~ "PBMC and Whole Blood",
+      all(cell_type == "PBMC")         ~ "PBMC",
+      all(cell_type == "WholeBlood")   ~ "Whole Blood",
+      TRUE                              ~ NA_character_
+    ),
+    .groups = "drop"
+  ) %>%
+  arrange(study_accession)
+
+saveRDS(is2_cell_type, file = fs::path("data", "is2", "is2_cell_type.rds"))
+
 # Final dataframe to be saved has samples as rows and variables as columns
 dim(is2_clinical)
 
