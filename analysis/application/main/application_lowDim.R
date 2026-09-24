@@ -64,7 +64,15 @@ make_legend_breaks <- function(n_vals) {
     legend_labels <- as.character(legend_breaks)
   }
 
-  list(breaks = legend_breaks, labels = legend_labels)
+  # scale_size_continuous() only draws a legend key for breaks that fall
+  # within the scale's limits, which default to the actual data range - so
+  # without explicit limits, a rounded-up max break (e.g. 300 when the real
+  # max is 274) would silently be dropped from the legend
+  list(
+    breaks = legend_breaks,
+    labels = legend_labels,
+    limits = range(c(legend_breaks, n_vals))
+  )
 }
 
 make_size_scale <- function(n_vals) {
@@ -72,7 +80,8 @@ make_size_scale <- function(n_vals) {
   scale_size_continuous(
     range = c(5, 20),
     breaks = leg$breaks,
-    labels = leg$labels
+    labels = leg$labels,
+    limits = leg$limits
   )
 }
 
@@ -315,23 +324,27 @@ riseMeta_plot_ARMD <- gamma_df_ARMD %>%
 
 # Shared legend breaks within ARMD only
 armd_n_all <- c(trial_effects_ARMD$n, gamma_df_ARMD$n)
+armd_legend <- make_legend_breaks(armd_n_all)
 
 jointModel_plot_mod_ARMD <- jointModel_plot_ARMD +
   scale_size_continuous(
     range = c(5, 20),
-    breaks = make_legend_breaks(armd_n_all)$breaks,
-    labels = make_legend_breaks(armd_n_all)$labels
+    breaks = armd_legend$breaks,
+    labels = armd_legend$labels,
+    limits = armd_legend$limits
   ) +
-  labs(title = "A) ARMD — Bivariate Joint Modelling")
+  labs(title = "ARMD — Bivariate Joint Modelling") +
+  theme(legend.position = "bottom")
 
 riseMeta_plot_mod_ARMD <- riseMeta_plot_ARMD +
   scale_size_continuous(
     range = c(5, 20),
-    breaks = make_legend_breaks(armd_n_all)$breaks,
-    labels = make_legend_breaks(armd_n_all)$labels
+    breaks = armd_legend$breaks,
+    labels = armd_legend$labels,
+    limits = armd_legend$limits
   ) +
-  labs(title = "A) ARMD — RISE-Meta") +
-  theme(axis.title.y = element_blank())
+  labs(title = "ARMD — RISE-Meta") +
+  theme(axis.title.y = element_blank(), legend.position = "bottom")
 
 # ============================================================
 # Ovarian cancer
@@ -578,34 +591,50 @@ jointModel_plot_mod_Ovarian <- jointModel_plot_Ovarian +
   scale_size_continuous(
     range = c(5, 20),
     breaks = ov_size_breaks$breaks,
-    labels = ov_size_breaks$labels
+    labels = ov_size_breaks$labels,
+    limits = ov_size_breaks$limits
   ) +
-  labs(title = "B) Ovarian — Bivariate Joint Modelling")
+  labs(title = "Ovarian — Bivariate Joint Modelling") +
+  theme(legend.position = "bottom")
 
 riseMeta_plot_mod_Ovarian <- riseMeta_plot_Ovarian +
   scale_size_continuous(
     range = c(5, 20),
     breaks = ov_size_breaks$breaks,
-    labels = ov_size_breaks$labels
+    labels = ov_size_breaks$labels,
+    limits = ov_size_breaks$limits
   ) +
-  labs(title = "B) Ovarian — RISE-Meta") +
-  theme(axis.title.y = element_blank())
+  labs(title = "Ovarian — RISE-Meta") +
+  theme(axis.title.y = element_blank(), legend.position = "bottom")
 
 # ============================================================
 # Overall combined plot
 # ============================================================
 
-# A single flat 2x2 grid (rather than nesting two separately-combined blocks)
-# so patchwork can align panel sizes and tick positions consistently across
-# all four panels via axes = "collect" (guides = "collect" merges the size
-# legend per row, since the two datasets have different center-size ranges)
+# Each row (dataset) is assembled and its guides collected separately, since
+# the two datasets have different center-size ranges/legends; each row's
+# collected legend sits centred at the bottom of that row (legend.position =
+# "bottom" on the panels above). The two rows are then stacked with a sized
+# spacer between them for breathing room, and an outer axes = "collect" keeps
+# panel sizes/tick positions aligned across both rows (this only works
+# because neither row is wrapped in wrap_elements(), which would rasterize it
+# and block cross-row alignment).
+row_widths <- c(4, 0.3, 4)   # extra gap between the two columns
+
+row_ARMD <- (jointModel_plot_mod_ARMD + plot_spacer() + riseMeta_plot_mod_ARMD) +
+  plot_layout(guides = "collect", widths = row_widths)
+
+row_Ovarian <- (jointModel_plot_mod_Ovarian + plot_spacer() + riseMeta_plot_mod_Ovarian) +
+  plot_layout(guides = "collect", widths = row_widths)
+
 overall_combined_plot <-
-  (
-    jointModel_plot_mod_ARMD + riseMeta_plot_mod_ARMD +
-      jointModel_plot_mod_Ovarian + riseMeta_plot_mod_Ovarian
-  ) +
-  plot_layout(ncol = 2, guides = "collect", axes = "collect") &
-  theme(plot.title = element_text(size = 22, hjust = 0.5, face = "bold"))
+  (row_ARMD / plot_spacer() / row_Ovarian) +
+  plot_layout(heights = c(4, 0.4, 4), axes = "collect") &
+  theme(
+    plot.title = element_text(size = 28, hjust = 0.5, face = "bold"),
+    plot.margin = margin(t = 15, r = 15, b = 15, l = 15),
+    legend.title = element_text(hjust = 0.5)
+  )
 
 overall_combined_plot
 
@@ -618,7 +647,7 @@ ggsave(
   plot = overall_combined_plot,
   path  = application_figures_folder,
   width = 40,
-  height = 36,
+  height = 42,
   units = "cm"
 )
 
