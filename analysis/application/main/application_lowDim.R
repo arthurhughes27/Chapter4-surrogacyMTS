@@ -609,22 +609,23 @@ riseMeta_plot_mod_Ovarian <- riseMeta_plot_Ovarian +
 # Overall combined plot
 # ============================================================
 
-# A single flat 2x2 grid (not nested/wrapped sub-patches) so patchwork can
-# align panel sizes and tick positions consistently across all four panels
-# via axes = "collect". guides = "collect" merges each dataset's own size
-# legend into one shared, vertically-stacked legend column on the right
-# (ARMD and Ovarian use different center-size ranges, so their legends stay
-# visually distinct even though collected into the same column).
-# Extra breathing room is added via plot.margin alone (bigger top/bottom than
-# left/right, for a larger gap between the two rows than between the two
-# columns) rather than spacer panels, which don't play well with
-# axes = "collect".
+# Each row's guides are collected separately (rather than one grid-wide
+# guides = "collect") so each dataset's legend is vertically centred on ITS
+# OWN row, instead of both legends being centred as a single group across the
+# full figure height (which pushed the top row's legend down and the bottom
+# row's legend up, toward the middle of the figure). Legends stay on the
+# right (vertical) as before - no plot_spacer()s or custom heights are
+# introduced here, so axes = "collect" at the outer level still keeps panel
+# sizes/tick positions aligned across both rows.
+row_ARMD <- (jointModel_plot_mod_ARMD + riseMeta_plot_mod_ARMD) +
+  plot_layout(guides = "collect")
+
+row_Ovarian <- (jointModel_plot_mod_Ovarian + riseMeta_plot_mod_Ovarian) +
+  plot_layout(guides = "collect")
+
 overall_combined_plot <-
-  (
-    jointModel_plot_mod_ARMD + riseMeta_plot_mod_ARMD +
-      jointModel_plot_mod_Ovarian + riseMeta_plot_mod_Ovarian
-  ) +
-  plot_layout(ncol = 2, guides = "collect", axes = "collect") &
+  (row_ARMD / row_Ovarian) +
+  plot_layout(axes = "collect") &
   theme(
     plot.title = element_text(size = 24, hjust = 0.5, face = "bold"),
     plot.margin = margin(t = 25, r = 15, b = 25, l = 15),
