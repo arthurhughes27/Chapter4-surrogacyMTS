@@ -20,31 +20,50 @@ ccc_fun <- function(x, y) {
        (mean(x, na.rm = TRUE) - mean(y, na.rm = TRUE))^2)
 }
 
+# Rounds x UP to a "nice" display value (one or five times a power of ten,
+# e.g. 274 -> 300, 48 -> 50), for the legend's largest break
+round_up_nice <- function(x) {
+  if (x <= 0) return(x)
+  magnitude <- 10 ^ floor(log10(x))
+  step <- magnitude / 2
+  ceiling(x / step) * step
+}
+
+# Rounds x to the NEAREST "nice" display value, for the legend's middle break
+round_nearest_nice <- function(x) {
+  if (x <= 0) return(x)
+  magnitude <- 10 ^ floor(log10(x))
+  step <- magnitude / 2
+  round(x / step) * step
+}
+
 make_legend_breaks <- function(n_vals) {
   n_vals <- n_vals[!is.na(n_vals)]   # <-- remove NA values
-  
+
   if (length(n_vals) == 0) {
     return(list(breaks = NULL, labels = NULL))
   }
-  
-  if (length(unique(n_vals)) == 1) {
-    legend_breaks <- unique(n_vals)
-    legend_labels <- as.character(unique(n_vals))
+
+  # Centers are already filtered to have at least 5 patients, so the smallest
+  # possible center size is always used as the first legend value
+  min_val <- 5
+  max_val <- round_up_nice(max(n_vals))
+
+  if (length(unique(n_vals)) == 1 || max_val <= min_val) {
+    legend_breaks <- sort(unique(c(min_val, max_val)))
+    legend_labels <- as.character(legend_breaks)
   } else {
-    min_val <- min(n_vals)
-    max_val <- max(n_vals)
-    median_val <- median(n_vals)
-    mid_val <- round(median_val)
-    
+    mid_val <- round_nearest_nice(median(n_vals))
+
     if (mid_val <= min_val)
       mid_val <- min_val + 1
     if (mid_val >= max_val)
       mid_val <- max_val - 1
-    
+
     legend_breaks <- c(min_val, mid_val, max_val)
     legend_labels <- as.character(legend_breaks)
   }
-  
+
   list(breaks = legend_breaks, labels = legend_labels)
 }
 
@@ -173,7 +192,7 @@ jointModel_plot_ARMD <- trial_effects_ARMD %>%
   ),
   expand = c(0, 0)) +
   coord_fixed(ratio = 1) +
-  labs(x = "Treatment effect on CVA at 6 months", y = "Treatment effect on CVA at 12 months", size = "Center N") +
+  labs(x = "Treatment effect on CVA at 6 months", y = "Treatment effect on CVA at 12 months", size = "Center sample size") +
   theme_minimal(base_size = 18) +
   theme(
     plot.title = element_text(size = 25, hjust = 0.5, face = "bold"),
@@ -286,7 +305,7 @@ riseMeta_plot_ARMD <- gamma_df_ARMD %>%
   scale_x_continuous(limits = c(-0.1, 1.1), expand = c(0, 0)) +
   scale_y_continuous(limits = c(-0.1, 1.1), expand = c(0, 0)) +
   coord_fixed(ratio = 1) +
-  labs(x = "Treatment effect on CVA at 6 months", y = "Treatment effect on CVA at 12 months", size = "Center N") +
+  labs(x = "Treatment effect on CVA at 6 months", y = "Treatment effect on CVA at 12 months", size = "Center sample size") +
   theme_minimal(base_size = 18) +
   theme(
     plot.title = element_text(size = 25, hjust = 0.5, face = "bold"),
@@ -296,7 +315,6 @@ riseMeta_plot_ARMD <- gamma_df_ARMD %>%
 
 # Shared legend breaks within ARMD only
 armd_n_all <- c(trial_effects_ARMD$n, gamma_df_ARMD$n)
-armd_size_scale <- make_size_scale(armd_n_all)
 
 jointModel_plot_mod_ARMD <- jointModel_plot_ARMD +
   scale_size_continuous(
@@ -304,7 +322,7 @@ jointModel_plot_mod_ARMD <- jointModel_plot_ARMD +
     breaks = make_legend_breaks(armd_n_all)$breaks,
     labels = make_legend_breaks(armd_n_all)$labels
   ) +
-  labs(title = "Bivariate Joint Modelling")
+  labs(title = "A) ARMD — Bivariate Joint Modelling")
 
 riseMeta_plot_mod_ARMD <- riseMeta_plot_ARMD +
   scale_size_continuous(
@@ -312,18 +330,8 @@ riseMeta_plot_mod_ARMD <- riseMeta_plot_ARMD +
     breaks = make_legend_breaks(armd_n_all)$breaks,
     labels = make_legend_breaks(armd_n_all)$labels
   ) +
-  labs(title = "RISE-Meta") +
+  labs(title = "A) ARMD — RISE-Meta") +
   theme(axis.title.y = element_blank())
-
-combined_plot_ARMD <-
-  (
-    jointModel_plot_mod_ARMD + plot_spacer() + riseMeta_plot_mod_ARMD +
-      plot_layout(guides = "collect", widths = c(4, 0.5, 4))
-  ) +
-  plot_annotation(title = "A) Age-related macular degeneration dataset",
-                  theme = theme(plot.title = element_text(
-                    size = 40, face = "bold", hjust = 0.5
-                  )))
 
 # ============================================================
 # Ovarian cancer
@@ -441,7 +449,7 @@ jointModel_plot_Ovarian <- trial_effects_Ovarian %>%
   ),
   expand = c(0, 0)) +
   coord_fixed(ratio = 1) +
-  labs(x = "Treatment effect on log(PFS)", y = "Treatment effect on log(OS)", size = "Center N") +
+  labs(x = "Treatment effect on log(PFS)", y = "Treatment effect on log(OS)", size = "Center sample size") +
   theme_minimal(base_size = 18) +
   theme(
     plot.title = element_text(size = 25, hjust = 0.5, face = "bold"),
@@ -554,7 +562,7 @@ riseMeta_plot_Ovarian <- gamma_df_Ovarian %>%
   scale_x_continuous(limits = c(-0.1, 1.1), expand = c(0, 0)) +
   scale_y_continuous(limits = c(-0.1, 1.1), expand = c(0, 0)) +
   coord_fixed(ratio = 1) +
-  labs(x = "Treatment effect on log(PFS)", y = "Treatment effect on log(OS)", size = "Center N") +
+  labs(x = "Treatment effect on log(PFS)", y = "Treatment effect on log(OS)", size = "Center sample size") +
   theme_minimal(base_size = 18) +
   theme(
     plot.title = element_text(size = 25, hjust = 0.5, face = "bold"),
@@ -572,7 +580,7 @@ jointModel_plot_mod_Ovarian <- jointModel_plot_Ovarian +
     breaks = ov_size_breaks$breaks,
     labels = ov_size_breaks$labels
   ) +
-  labs(title = "Bivariate Joint Modelling")
+  labs(title = "B) Ovarian — Bivariate Joint Modelling")
 
 riseMeta_plot_mod_Ovarian <- riseMeta_plot_Ovarian +
   scale_size_continuous(
@@ -580,28 +588,24 @@ riseMeta_plot_mod_Ovarian <- riseMeta_plot_Ovarian +
     breaks = ov_size_breaks$breaks,
     labels = ov_size_breaks$labels
   ) +
-  labs(title = "RISE-Meta") +
+  labs(title = "B) Ovarian — RISE-Meta") +
   theme(axis.title.y = element_blank())
-
-combined_plot_Ovarian <-
-  (
-    jointModel_plot_mod_Ovarian + plot_spacer() + riseMeta_plot_mod_Ovarian +
-      plot_layout(guides = "collect", widths = c(4, 0.5, 4))
-  ) +
-  plot_annotation(title = "B) Ovarian cancer dataset",
-                  theme = theme(plot.title = element_text(
-                    size = 40, face = "bold", hjust = 0.5
-                  )))
 
 # ============================================================
 # Overall combined plot
 # ============================================================
 
+# A single flat 2x2 grid (rather than nesting two separately-combined blocks)
+# so patchwork can align panel sizes and tick positions consistently across
+# all four panels via axes = "collect" (guides = "collect" merges the size
+# legend per row, since the two datasets have different center-size ranges)
 overall_combined_plot <-
-  wrap_elements(full = combined_plot_ARMD) /
-  plot_spacer() /
-  wrap_elements(full = combined_plot_Ovarian) +
-  plot_layout(heights = c(1, 0.06, 1))
+  (
+    jointModel_plot_mod_ARMD + riseMeta_plot_mod_ARMD +
+      jointModel_plot_mod_Ovarian + riseMeta_plot_mod_Ovarian
+  ) +
+  plot_layout(ncol = 2, guides = "collect", axes = "collect") &
+  theme(plot.title = element_text(size = 22, hjust = 0.5, face = "bold"))
 
 overall_combined_plot
 
@@ -614,7 +618,7 @@ ggsave(
   plot = overall_combined_plot,
   path  = application_figures_folder,
   width = 40,
-  height = 42,
+  height = 36,
   units = "cm"
 )
 
