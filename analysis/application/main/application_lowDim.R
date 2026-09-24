@@ -333,8 +333,7 @@ jointModel_plot_mod_ARMD <- jointModel_plot_ARMD +
     labels = armd_legend$labels,
     limits = armd_legend$limits
   ) +
-  labs(title = "ARMD — Bivariate Joint Modelling") +
-  theme(legend.position = "bottom")
+  labs(title = "ARMD — Bivariate Joint Modelling")
 
 riseMeta_plot_mod_ARMD <- riseMeta_plot_ARMD +
   scale_size_continuous(
@@ -344,7 +343,7 @@ riseMeta_plot_mod_ARMD <- riseMeta_plot_ARMD +
     limits = armd_legend$limits
   ) +
   labs(title = "ARMD — RISE-Meta") +
-  theme(axis.title.y = element_blank(), legend.position = "bottom")
+  theme(axis.title.y = element_blank())
 
 # ============================================================
 # Ovarian cancer
@@ -594,8 +593,7 @@ jointModel_plot_mod_Ovarian <- jointModel_plot_Ovarian +
     labels = ov_size_breaks$labels,
     limits = ov_size_breaks$limits
   ) +
-  labs(title = "Ovarian — Bivariate Joint Modelling") +
-  theme(legend.position = "bottom")
+  labs(title = "Ovarian — Bivariate Joint Modelling")
 
 riseMeta_plot_mod_Ovarian <- riseMeta_plot_Ovarian +
   scale_size_continuous(
@@ -605,35 +603,32 @@ riseMeta_plot_mod_Ovarian <- riseMeta_plot_Ovarian +
     limits = ov_size_breaks$limits
   ) +
   labs(title = "Ovarian — RISE-Meta") +
-  theme(axis.title.y = element_blank(), legend.position = "bottom")
+  theme(axis.title.y = element_blank())
 
 # ============================================================
 # Overall combined plot
 # ============================================================
 
-# Each row (dataset) is assembled and its guides collected separately, since
-# the two datasets have different center-size ranges/legends; each row's
-# collected legend sits centred at the bottom of that row (legend.position =
-# "bottom" on the panels above). The two rows are then stacked with a sized
-# spacer between them for breathing room, and an outer axes = "collect" keeps
-# panel sizes/tick positions aligned across both rows (this only works
-# because neither row is wrapped in wrap_elements(), which would rasterize it
-# and block cross-row alignment).
-row_widths <- c(4, 0.3, 4)   # extra gap between the two columns
-
-row_ARMD <- (jointModel_plot_mod_ARMD + plot_spacer() + riseMeta_plot_mod_ARMD) +
-  plot_layout(guides = "collect", widths = row_widths)
-
-row_Ovarian <- (jointModel_plot_mod_Ovarian + plot_spacer() + riseMeta_plot_mod_Ovarian) +
-  plot_layout(guides = "collect", widths = row_widths)
-
+# A single flat 2x2 grid (not nested/wrapped sub-patches) so patchwork can
+# align panel sizes and tick positions consistently across all four panels
+# via axes = "collect". guides = "collect" merges each dataset's own size
+# legend into one shared, vertically-stacked legend column on the right
+# (ARMD and Ovarian use different center-size ranges, so their legends stay
+# visually distinct even though collected into the same column).
+# Extra breathing room is added via plot.margin alone (bigger top/bottom than
+# left/right, for a larger gap between the two rows than between the two
+# columns) rather than spacer panels, which don't play well with
+# axes = "collect".
 overall_combined_plot <-
-  (row_ARMD / plot_spacer() / row_Ovarian) +
-  plot_layout(heights = c(4, 0.4, 4), axes = "collect") &
+  (
+    jointModel_plot_mod_ARMD + riseMeta_plot_mod_ARMD +
+      jointModel_plot_mod_Ovarian + riseMeta_plot_mod_Ovarian
+  ) +
+  plot_layout(ncol = 2, guides = "collect", axes = "collect") &
   theme(
-    plot.title = element_text(size = 28, hjust = 0.5, face = "bold"),
-    plot.margin = margin(t = 15, r = 15, b = 15, l = 15),
-    legend.title = element_text(hjust = 0.5)
+    plot.title = element_text(size = 24, hjust = 0.5, face = "bold"),
+    plot.margin = margin(t = 25, r = 15, b = 25, l = 15),
+    legend.position = "right"
   )
 
 overall_combined_plot
@@ -647,7 +642,7 @@ ggsave(
   plot = overall_combined_plot,
   path  = application_figures_folder,
   width = 40,
-  height = 42,
+  height = 38,
   units = "cm"
 )
 
