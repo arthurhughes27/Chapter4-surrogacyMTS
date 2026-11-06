@@ -333,7 +333,7 @@ jointModel_plot_mod_ARMD <- jointModel_plot_ARMD +
     labels = armd_legend$labels,
     limits = armd_legend$limits
   ) +
-  labs(title = "ARMD — Bivariate Joint Modelling")
+  labs(title = "ARMD: Bivariate Joint Modelling")
 
 riseMeta_plot_mod_ARMD <- riseMeta_plot_ARMD +
   scale_size_continuous(
@@ -342,7 +342,7 @@ riseMeta_plot_mod_ARMD <- riseMeta_plot_ARMD +
     labels = armd_legend$labels,
     limits = armd_legend$limits
   ) +
-  labs(title = "ARMD — RISE-Meta") +
+  labs(title = "ARMD: RISE-Meta") +
   theme(axis.title.y = element_blank())
 
 # ============================================================
@@ -593,7 +593,7 @@ jointModel_plot_mod_Ovarian <- jointModel_plot_Ovarian +
     labels = ov_size_breaks$labels,
     limits = ov_size_breaks$limits
   ) +
-  labs(title = "Ovarian — Bivariate Joint Modelling")
+  labs(title = "Ovarian: Bivariate Joint Modelling")
 
 riseMeta_plot_mod_Ovarian <- riseMeta_plot_Ovarian +
   scale_size_continuous(
@@ -602,7 +602,7 @@ riseMeta_plot_mod_Ovarian <- riseMeta_plot_Ovarian +
     labels = ov_size_breaks$labels,
     limits = ov_size_breaks$limits
   ) +
-  labs(title = "Ovarian — RISE-Meta") +
+  labs(title = "Ovarian: RISE-Meta") +
   theme(axis.title.y = element_blank())
 
 # ============================================================
